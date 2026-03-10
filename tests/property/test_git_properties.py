@@ -27,6 +27,8 @@ def valid_commit_data(draw):
     message = draw(st.text(min_size=1, max_size=200, alphabet=st.characters(
         blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00'
     )))
+    # Ensure message is not just whitespace (git strips whitespace)
+    assume(message.strip() != "")
     num_files = draw(st.integers(min_value=1, max_value=5))
     files = [f"file_{i}.txt" for i in range(num_files)]
     return message, files
@@ -165,10 +167,10 @@ def test_property_1_complete_commit_signal_capture(commit_data):
         assert commit_signal.hash == commit_hash, \
             f"Commit hash must match: expected {commit_hash}, got {commit_signal.hash}"
         
-        # Verify message is present and matches
+        # Verify message is present and matches (git strips whitespace)
         assert hasattr(commit_signal, 'message'), "Commit signal must contain message"
-        assert commit_signal.message == message, \
-            f"Commit message must match: expected '{message}', got '{commit_signal.message}'"
+        assert commit_signal.message == message.strip(), \
+            f"Commit message must match: expected '{message.strip()}', got '{commit_signal.message}'"
         
         # Verify timestamp is present and valid
         assert hasattr(commit_signal, 'timestamp'), "Commit signal must contain timestamp"
