@@ -41,20 +41,20 @@ The system consists of:
     - **Property 7: Snapshot Word Limit Constraint**
     - **Validates: Requirements 3.6**
 
-  - [-] 2.4 Write property test for next steps format validation
+  - [x] 2.4 Write property test for next steps format validation
     - **Property 9: Next Steps Format Validation**
     - **Validates: Requirements 3.9**
 
 
 - [ ] 3. Implement Git Observer component
-  - [~] 3.1 Create GitObserver class with repository detection
+  - [x] 3.1 Create GitObserver class with repository detection
     - Implement repository root detection using GitPython
     - Implement git availability check
     - Implement remote URL extraction
     - Implement repository_id generation (SHA-256 hash of remote + path)
     - _Requirements: 1.5, 7.4, 11.4, 11.6_
 
-  - [~] 3.2 Implement git signal capture methods
+  - [-] 3.2 Implement git signal capture methods
     - Implement capture_commit_signal (hash, message, timestamp, files)
     - Implement capture_branch_switch (from_branch, to_branch, timestamp)
     - Implement capture_uncommitted_changes (staged and unstaged)

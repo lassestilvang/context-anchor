@@ -314,3 +314,40 @@ def test_property_7_snapshot_word_limit_constraint(snapshot):
     for step in snapshot.next_steps:
         assert step in text_content, f"next_step '{step}' must be included in text content"
 
+
+@settings(max_examples=100)
+@given(snapshot=valid_context_snapshot())
+def test_property_9_next_steps_format_validation(snapshot):
+    """
+    Feature: context-anchor, Property 9: Next Steps Format Validation
+
+    **Validates: Requirements 3.9**
+
+    For any generated Context_Snapshot, the next_steps list must contain between
+    1 and 5 items, and each item must begin with a recognized action verb.
+    """
+    # Verify next_steps count is within valid range
+    assert 1 <= len(snapshot.next_steps) <= 5, (
+        f"next_steps must contain 1-5 items, got {len(snapshot.next_steps)}"
+    )
+
+    # Verify each next step starts with a recognized action verb
+    for step in snapshot.next_steps:
+        # Extract the first word from the step
+        words = step.split()
+        assert len(words) > 0, f"Next step cannot be empty: '{step}'"
+        
+        first_word = words[0].lower()
+        
+        # Verify the first word is a recognized action verb
+        assert first_word in ACTION_VERBS, (
+            f"Next step must start with a recognized action verb. "
+            f"Got: '{first_word}' in step: '{step}'. "
+            f"Valid verbs: {', '.join(sorted(ACTION_VERBS))}"
+        )
+
+    # Verify all next_steps are non-empty strings
+    for step in snapshot.next_steps:
+        assert isinstance(step, str), f"Next step must be a string, got {type(step)}"
+        assert len(step.strip()) > 0, "Next step cannot be empty or whitespace only"
+
