@@ -160,8 +160,8 @@ The system consists of:
     - _Requirements: 15.5, 15.6_
 
 
-- [-] 7. Implement AWS infrastructure with CDK
-  - [~] 7.1 Create CDK stack for DynamoDB tables
+- [x] 7. Implement AWS infrastructure with CDK
+  - [x] 7.1 Create CDK stack for DynamoDB tables
     - Define ContextSnapshots table with PK (REPO#id) and SK (BRANCH#branch#TS#timestamp)
     - Add GSI ByDeveloper (PK: DEV#id, SK: TS#timestamp)
     - Add GSI BySnapshotId (PK: SNAPSHOT#id, SK: SNAPSHOT#id)
@@ -170,7 +170,7 @@ The system consists of:
     - Configure TTL on retention_expires_at field
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 9.1, 14.1_
 
-  - [~] 7.2 Create CDK stack for Lambda functions
+  - [x] 7.2 Create CDK stack for Lambda functions
     - Define Lambda function for context capture (Python 3.11, 512MB, 30s timeout)
     - Define Lambda function for context retrieval
     - Define Lambda function for context deletion
@@ -178,7 +178,7 @@ The system consists of:
     - Configure IAM roles with least-privilege access
     - _Requirements: 14.3_
 
-  - [~] 7.3 Create CDK stack for API Gateway
+  - [x] 7.3 Create CDK stack for API Gateway
     - Define REST API with regional endpoint
     - Create POST /v1/contexts endpoint
     - Create GET /v1/contexts/latest endpoint
@@ -190,19 +190,19 @@ The system consists of:
     - Enable TLS 1.3 requirement
     - _Requirements: 9.2, 14.4_
 
-  - [~] 7.4 Create CDK stack for S3 and cost guardrails
+  - [x] 7.4 Create CDK stack for S3 and cost guardrails
     - Define S3 bucket with lifecycle policies
     - Configure AWS Budgets with Free Tier thresholds
     - Set up CloudWatch alarms for cost alerts
     - _Requirements: 14.5, 14.6_
 
-  - [~] 7.5 Write unit tests for CDK constructs
+  - [x] 7.5 Write unit tests for CDK constructs
     - Test DynamoDB table configuration
     - Test Lambda function configuration
     - Test API Gateway endpoint configuration
     - Test IAM role permissions
 
-- [~] 8. Checkpoint - Ensure all tests pass
+- [-] 8. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 

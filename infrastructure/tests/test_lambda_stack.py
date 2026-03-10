@@ -254,12 +254,12 @@ def test_bedrock_permissions():
     lambda_stack = TestLambdaStack(app, "LambdaStack", table=dynamodb_stack.table)
     template = assertions.Template.from_stack(lambda_stack)
     
-    # Verify Bedrock permissions exist
+    # Verify Bedrock permissions exist (Action can be string or array)
     template.has_resource_properties("AWS::IAM::Policy", {
         "PolicyDocument": {
             "Statement": assertions.Match.array_with([
                 assertions.Match.object_like({
-                    "Action": ["bedrock:InvokeModel"],
+                    "Action": "bedrock:InvokeModel",
                     "Effect": "Allow"
                 })
             ])
