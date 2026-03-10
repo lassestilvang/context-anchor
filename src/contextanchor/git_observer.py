@@ -212,7 +212,7 @@ class GitObserver:
             # Detached HEAD state or other error
             return None
 
-        def capture_commit_signal(self) -> Optional["CommitInfo"]:
+    def capture_commit_signal(self) -> Optional["CommitInfo"]:
         """
         Extract signal from most recent commit.
 
@@ -286,132 +286,150 @@ class GitObserver:
         }
 
     def capture_uncommitted_changes(self) -> list:
-    """
-    Analyze staged and unstaged changes.
+        """
+        Analyze staged and unstaged changes.
 
-    Returns:
-        List of FileChange objects representing both staged and unstaged changes,
-        or empty list if no changes or error occurs
+        Returns:
+            List of FileChange objects representing both staged and unstaged changes,
+            or empty list if no changes or error occurs
 
-    Validates: Requirements 2.1, 2.6
-    """
-    if self._repo is None:
-        root = self.detect_repository_root()
-        if root is None:
+        Validates: Requirements 2.1, 2.6
+        """
+        if self._repo is None:
+            root = self.detect_repository_root()
+            if root is None:
+                return []
+
+        if self._repo is None:
             return []
 
-    if self._repo is None:
-        return []
-
-    try:
-        from contextanchor.models import FileChange
-
-        changes = []
-
-        # Get unstaged changes (working directory vs index)
-        unstaged_diffs = self._repo.index.diff(None)
-        for diff in unstaged_diffs:
-            path = diff.a_path or diff.b_path
-            status = self._get_change_status(diff)
-            changes.append(
-                FileChange(
-                    path=path,
-                    status=status,
-                    lines_added=0,  # GitPython doesn't provide line counts for unstaged
-                    lines_deleted=0,
-                )
-            )
-
-        # Get staged changes (HEAD vs index)
         try:
-            staged_diffs = self._repo.index.diff("HEAD")
-            for diff in staged_diffs:
+            from contextanchor.models import FileChange
+
+            changes = []
+
+            # Get unstaged changes (working directory vs index)
+            unstaged_diffs = self._repo.index.diff(None)
+            for diff in unstaged_diffs:
                 path = diff.a_path or diff.b_path
                 status = self._get_change_status(diff)
                 changes.append(
                     FileChange(
                         path=path,
                         status=status,
-                        lines_added=0,  # GitPython doesn't provide line counts easily
+                        lines_added=0,  # GitPython doesn't provide line counts for unstaged
                         lines_deleted=0,
                     )
                 )
-        except GitCommandError:
-            # No HEAD commit yet (empty repository)
-            pass
 
-        # Get untracked files
-        untracked_files = self._repo.untracked_files
-        for path in untracked_files:
-            changes.append(
-                FileChange(
-                    path=path,
-                    status="added",
-                    lines_added=0,
-                    lines_deleted=0,
+            # Get staged changes (HEAD vs index)
+            try:
+                staged_diffs = self._repo.index.diff("HEAD")
+                for diff in staged_diffs:
+                    path = diff.a_path or diff.b_path
+                    status = self._get_change_status(diff)
+                    changes.append(
+                        FileChange(
+                            path=path,
+                            status=status,
+                            lines_added=0,  # GitPython doesn't provide line counts easily
+                            lines_deleted=0,
+                        )
+                    )
+            except GitCommandError:
+                # No HEAD commit yet (empty repository)
+                pass
+
+            # Get untracked files
+            untracked_files = self._repo.untracked_files
+            for path in untracked_files:
+                changes.append(
+                    FileChange(
+                        path=path,
+                        status="added",
+                        lines_added=0,
+                        lines_deleted=0,
+                    )
                 )
-            )
 
-        return changes
-    except (GitCommandError, AttributeError):
-        return []
+            return changes
+        except (GitCommandError, AttributeError):
+            return []
 
-def capture_diff_signal(self, source: str = "save_context") -> Optional[dict]:
-    """
-    Capture file paths and summary stats for current staged/unstaged diff.
+    def capture_diff_signal(self, source: str = "save_context") -> Optional[dict]:
+        """
+        Capture file paths and summary stats for current staged/unstaged diff.
 
-    Args:
-        source: Capture source identifier (default: "save_context")
+        Args:
+            source: Capture source identifier (default: "save_context")
 
-    Returns:
-        Dictionary with file paths, summary statistics, repository_id, and capture_source,
-        or None if repository not detected
+        Returns:
+            Dictionary with file paths, summary statistics, repository_id, and capture_source,
+            or None if repository not detected
 
-    Validates: Requirements 1.3, 1.5, 1.6
-    """
-    if self._repo is None:
-        root = self.detect_repository_root()
-        if root is None:
+        Validates: Requirements 1.3, 1.5, 1.6
+        """
+        if self._repo is None:
+            root = self.detect_repository_root()
+            if root is None:
+                return None
+
+        if self._repo is None:
             return None
 
-    if self._repo is None:
-        return None
+        try:
+            file_changes = self.capture_uncommitted_changes()
 
-    try:
-        file_changes = self.capture_uncommitted_changes()
+            # Calculate summary statistics
+            files_changed = len(file_changes)
+            lines_added = sum(fc.lines_added for fc in file_changes)
+            lines_deleted = sum(fc.lines_deleted for fc in file_changes)
 
-        # Calculate summary statistics
-        files_changed = len(file_changes)
-        lines_added = sum(fc.lines_added for fc in file_changes)
-        lines_deleted = sum(fc.lines_deleted for fc in file_changes)
+            return {
+                "file_paths": [fc.path for fc in file_changes],
+                "files_changed": files_changed,
+                "lines_added": lines_added,
+                "lines_deleted": lines_deleted,
+                "repository_id": self.generate_repository_id(),
+                "capture_source": source,
+            }
+        except (GitCommandError, AttributeError):
+            return None
 
-        return {
-            "file_paths": [fc.path for fc in file_changes],
-            "files_changed": files_changed,
-            "lines_added": lines_added,
-            "lines_deleted": lines_deleted,
-            "repository_id": self.generate_repository_id(),
-            "capture_source": source,
-        }
-    except (GitCommandError, AttributeError):
-        return None
+    def _get_change_status(self, diff) -> str:
+        """
+        Determine the change status from a git diff object.
 
-def _get_change_status(self, diff) -> str:
-    """
-    Determine the change status from a git diff object.
+        Args:
+            diff: GitPython diff object
 
-    Args:
-        diff: GitPython diff object
-
-    Returns:
-        Status string: "modified", "added", "deleted", or "renamed"
-    """
-    if diff.new_file:
-        return "added"
-    elif diff.deleted_file:
-        return "deleted"
-    elif diff.renamed_file:
-        return "renamed"
-    else:
-        return "modified"
+        Returns:
+            Status string: "modified", "added", "deleted", or "renamed"
+        """
+        # When using index.diff("HEAD"), the diff shows changes FROM HEAD TO index
+        # This means the change_type is inverted from what we'd expect:
+        # - change_type='D' means file is in HEAD but not in index (deleted)
+        # - change_type='A' means file is not in HEAD but in index (added)
+        # But GitPython reports them backwards, so we need to invert
+        
+        if diff.renamed_file or (hasattr(diff, 'rename_from') and diff.rename_from):
+            return "renamed"
+        elif diff.change_type == 'D':
+            # File deleted from HEAD's perspective = added to index
+            return "added"
+        elif diff.change_type == 'A':
+            # File added from HEAD's perspective = deleted from index
+            return "deleted"
+        elif diff.change_type == 'M':
+            return "modified"
+        elif diff.change_type == 'R':
+            return "renamed"
+        else:
+            # Fallback logic
+            if diff.a_path is None:
+                return "added"
+            elif diff.b_path is None:
+                return "deleted"
+            else:
+                return "modified"
 

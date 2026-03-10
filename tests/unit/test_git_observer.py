@@ -668,10 +668,17 @@ class TestChangeStatusDetection:
         observer = GitObserver(str(tmp_path))
         diffs = repo.index.diff("HEAD")
 
+        # Find the diff for file2.txt and check its status
+        found = False
         for diff in diffs:
+            # For added files, b_path contains the new file
             if diff.b_path == "file2.txt":
                 status = observer._get_change_status(diff)
                 assert status == "added"
+                found = True
+                break
+        
+        assert found, "file2.txt diff not found"
 
     def test_get_change_status_deleted(self, tmp_path):
         """Test detecting deleted file status."""
@@ -690,7 +697,15 @@ class TestChangeStatusDetection:
         observer = GitObserver(str(tmp_path))
         diffs = repo.index.diff("HEAD")
 
+        # Find the diff for test.txt and check its status
+        found = False
         for diff in diffs:
-            status = observer._get_change_status(diff)
-            assert status == "deleted"
+            # For deleted files, a_path contains the old file
+            if diff.a_path == "test.txt":
+                status = observer._get_change_status(diff)
+                assert status == "deleted"
+                found = True
+                break
+        
+        assert found, "test.txt diff not found"
 
