@@ -54,14 +54,14 @@ The system consists of:
     - Implement repository_id generation (SHA-256 hash of remote + path)
     - _Requirements: 1.5, 7.4, 11.4, 11.6_
 
-  - [-] 3.2 Implement git signal capture methods
+  - [x] 3.2 Implement git signal capture methods
     - Implement capture_commit_signal (hash, message, timestamp, files)
     - Implement capture_branch_switch (from_branch, to_branch, timestamp)
     - Implement capture_uncommitted_changes (staged and unstaged)
     - Implement capture_diff_signal (file paths, summary stats)
     - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.6_
 
-  - [~] 3.3 Write property tests for signal capture completeness
+  - [-] 3.3 Write property tests for signal capture completeness
     - **Property 1: Complete Commit Signal Capture**
     - **Property 2: Complete Branch Switch Signal Capture**
     - **Property 3: Complete Diff Signal Capture**
