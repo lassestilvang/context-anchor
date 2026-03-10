@@ -336,8 +336,8 @@ class GitObserver:
                             lines_deleted=0,
                         )
                     )
-            except GitCommandError:
-                # No HEAD commit yet (empty repository)
+            except (GitCommandError, Exception):
+                # No HEAD commit yet (empty repository) or other git errors
                 pass
 
             # Get untracked files

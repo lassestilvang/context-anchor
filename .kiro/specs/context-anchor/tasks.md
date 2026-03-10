@@ -82,14 +82,14 @@ The system consists of:
     - **Property 35: GitHub Remote Parsing**
     - **Validates: Requirements 10.1**
 
-  - [-] 3.7 Implement git hook installation
+  - [x] 3.7 Implement git hook installation
     - Create post-checkout hook template for branch switch detection
     - Create post-commit hook template for commit signal capture
     - Implement install_hooks method with permission checks
     - Implement hook status detection (active, degraded, unavailable)
     - _Requirements: 5.6, 7.6_
 
-  - [~] 3.8 Write unit tests for git operations
+  - [-] 3.8 Write unit tests for git operations
     - Test repository detection from subdirectories
     - Test git availability check
     - Test hook installation with various permission scenarios
