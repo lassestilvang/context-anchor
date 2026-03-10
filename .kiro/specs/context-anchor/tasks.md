@@ -100,8 +100,8 @@ The system consists of:
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [-] 5. Implement local storage and offline queue
-  - [~] 5.1 Create LocalStorage class using SQLite
+- [x] 5. Implement local storage and offline queue
+  - [x] 5.1 Create LocalStorage class using SQLite
     - Implement SQLite schema for offline queue (operation_id, type, payload, timestamps)
     - Implement queue_operation method to store operations locally
     - Implement get_pending_operations to retrieve queued items
@@ -109,50 +109,50 @@ The system consists of:
     - Implement cache for Context_Snapshots
     - _Requirements: 8.1, 8.4, 8.6_
 
-  - [~] 5.2 Implement retry logic with exponential backoff
+  - [x] 5.2 Implement retry logic with exponential backoff
     - Implement retry_operation with exponential backoff calculation
     - Implement operation expiration after 24 hours
     - Implement next_retry_at calculation
     - Add retry_count tracking
     - _Requirements: 8.7_
 
-  - [~] 5.3 Write property test for offline queue capacity
+  - [x] 5.3 Write property test for offline queue capacity
     - **Property 29: Offline Queue Capacity**
     - **Validates: Requirements 8.6**
 
-  - [~] 5.4 Write property test for exponential backoff
+  - [x] 5.4 Write property test for exponential backoff
     - **Property 30: Exponential Backoff and Expiration**
     - **Validates: Requirements 8.7**
 
-  - [~] 5.5 Write unit tests for offline operations
+  - [x] 5.5 Write unit tests for offline operations
     - Test queue storage and retrieval
     - Test operation expiration
     - Test cache functionality
     - _Requirements: 8.1, 8.4, 8.8_
 
-- [-] 6. Implement configuration management
-  - [~] 6.1 Create Config class and YAML parser
+- [x] 6. Implement configuration management
+  - [x] 6.1 Create Config class and YAML parser
     - Implement Config dataclass with all configuration fields
     - Implement load_config from ~/.contextanchor/config.yaml
     - Implement default configuration values
     - Implement config validation with schema checking
     - _Requirements: 15.1, 15.5, 15.6_
 
-  - [~] 6.2 Implement configuration customization
+  - [x] 6.2 Implement configuration customization
     - Support custom capture prompt configuration
     - Support custom retention period configuration
     - Support enabled_signals list configuration
     - Support redact_patterns list configuration
     - _Requirements: 15.2, 15.3, 15.4_
 
-  - [~] 6.3 Write property tests for configuration
+  - [x] 6.3 Write property tests for configuration
     - **Property 46: Custom Prompt Configuration**
     - **Property 47: Custom Retention Configuration**
     - **Property 48: Signal Monitoring Configuration**
     - **Property 49: Invalid Configuration Handling**
     - **Validates: Requirements 15.2, 15.3, 15.4, 15.5, 15.6**
 
-  - [~] 6.4 Write unit tests for configuration edge cases
+  - [x] 6.4 Write unit tests for configuration edge cases
     - Test missing config file (use defaults)
     - Test invalid YAML syntax
     - Test invalid field types
@@ -160,7 +160,7 @@ The system consists of:
     - _Requirements: 15.5, 15.6_
 
 
-- [ ] 7. Implement AWS infrastructure with CDK
+- [-] 7. Implement AWS infrastructure with CDK
   - [~] 7.1 Create CDK stack for DynamoDB tables
     - Define ContextSnapshots table with PK (REPO#id) and SK (BRANCH#branch#TS#timestamp)
     - Add GSI ByDeveloper (PK: DEV#id, SK: TS#timestamp)

@@ -89,15 +89,16 @@ def load_config(config_path: Optional[Path] = None) -> Config:
         raise ConfigValidationError(validation_errors)
 
     # Create Config object (types are guaranteed by validation)
+    # Type ignore comments needed because mypy doesn't track validation
     return Config(
-        api_endpoint=str(config_dict["api_endpoint"]),
-        api_timeout_seconds=int(config_dict["api_timeout_seconds"]),
-        retry_attempts=int(config_dict["retry_attempts"]),
-        capture_prompt=str(config_dict["capture_prompt"]),
-        retention_days=int(config_dict["retention_days"]),
-        offline_queue_max=int(config_dict["offline_queue_max"]),
-        enabled_signals=list(config_dict["enabled_signals"]),
-        redact_patterns=list(config_dict["redact_patterns"]),
+        api_endpoint=config_dict["api_endpoint"],  # type: ignore[arg-type]
+        api_timeout_seconds=config_dict["api_timeout_seconds"],  # type: ignore[arg-type]
+        retry_attempts=config_dict["retry_attempts"],  # type: ignore[arg-type]
+        capture_prompt=config_dict["capture_prompt"],  # type: ignore[arg-type]
+        retention_days=config_dict["retention_days"],  # type: ignore[arg-type]
+        offline_queue_max=config_dict["offline_queue_max"],  # type: ignore[arg-type]
+        enabled_signals=config_dict["enabled_signals"],  # type: ignore[arg-type]
+        redact_patterns=config_dict["redact_patterns"],  # type: ignore[arg-type]
     )
 
 
