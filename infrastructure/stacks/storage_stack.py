@@ -37,7 +37,7 @@ class StorageStack(Stack):
             bucket_name=None,  # Auto-generated name
             encryption=s3.BucketEncryption.S3_MANAGED,  # AES-256 encryption
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            versioning=False,  # Disabled to reduce costs
+            versioned=False,  # Disabled to reduce costs
             removal_policy=RemovalPolicy.RETAIN,
             auto_delete_objects=False,
             lifecycle_rules=[
