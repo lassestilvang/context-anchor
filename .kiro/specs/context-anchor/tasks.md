@@ -96,11 +96,11 @@ The system consists of:
     - Test error handling for git command failures
     - _Requirements: 6.5, 7.4, 8.3_
 
-- [~] 4. Checkpoint - Ensure all tests pass
+- [x] 4. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 5. Implement local storage and offline queue
+- [-] 5. Implement local storage and offline queue
   - [~] 5.1 Create LocalStorage class using SQLite
     - Implement SQLite schema for offline queue (operation_id, type, payload, timestamps)
     - Implement queue_operation method to store operations locally
@@ -130,7 +130,7 @@ The system consists of:
     - Test cache functionality
     - _Requirements: 8.1, 8.4, 8.8_
 
-- [ ] 6. Implement configuration management
+- [-] 6. Implement configuration management
   - [~] 6.1 Create Config class and YAML parser
     - Implement Config dataclass with all configuration fields
     - Implement load_config from ~/.contextanchor/config.yaml

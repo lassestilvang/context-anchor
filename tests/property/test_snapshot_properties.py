@@ -38,7 +38,11 @@ def valid_branch_name(draw):
             alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/"
         )
     )
-    return branch.strip("/")  # Remove leading/trailing slashes
+    # Strip slashes and ensure not empty
+    branch = branch.strip("/")
+    if not branch:
+        branch = "main"  # Default to main if empty after stripping
+    return branch  # Remove leading/trailing slashes
 
 
 def valid_developer_id():
