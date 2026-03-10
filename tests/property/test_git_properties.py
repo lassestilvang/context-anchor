@@ -1,0 +1,345 @@
+"""
+Property-based tests for Git signal capture completeness.
+
+Tests universal properties that must hold for all git activity monitoring operations.
+Uses Hypothesis for comprehensive input coverage.
+"""
+
+import os
+import tempfile
+import shutil
+from datetime import datetime
+from pathlib import Path
+from typing import List
+
+import pytest
+from hypothesis import given, strategies as st, settings, assume
+import git
+
+from src.contextanchor.git_observer import GitObserver
+
+
+# Hypothesis strategies for generating valid test data
+
+@st.composite
+def valid_commit_data(draw):
+    """Generate valid commit data for testing."""
+    message = draw(st.text(min_size=1, max_size=200, alphabet=st.characters(
+        blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00'
+    )))
+    num_files = draw(st.integers(min_value=1, max_value=5))
+    files = [f"file_{i}.txt" for i in range(num_files)]
+    return message, files
+
+
+@st.composite
+def valid_branch_names(draw):
+    """Generate valid git branch names."""
+    # Git branch names can contain letters, digits, -, _, /
+    # but cannot start with -, end with ., or contain ..
+    name = draw(st.text(
+        min_size=1,
+        max_size=50,
+        alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/"
+    ))
+    # Clean up invalid patterns
+    name = name.strip("/").strip("-")
+    name = name.replace("..", ".")
+    assume(len(name) > 0)
+    assume(not name.startswith("-"))
+    assume(not name.endswith("."))
+    return name
+
+
+@st.composite
+def valid_file_modifications(draw):
+    """Generate valid file modification data."""
+    num_files = draw(st.integers(min_value=1, max_value=5))
+    files = []
+    for i in range(num_files):
+        filename = f"test_file_{i}.txt"
+        content = draw(st.text(min_size=10, max_size=200))
+        files.append((filename, content))
+    return files
+
+
+# Helper functions for test repository setup
+
+def create_test_repo(temp_dir: str) -> git.Repo:
+    """Create a test git repository with initial commit."""
+    repo = git.Repo.init(temp_dir)
+    
+    # Configure git user for commits
+    with repo.config_writer() as config:
+        config.set_value("user", "name", "Test User")
+        config.set_value("user", "email", "test@example.com")
+    
+    # Create initial commit
+    initial_file = os.path.join(temp_dir, "README.md")
+    with open(initial_file, "w") as f:
+        f.write("# Test Repository\n")
+    
+    repo.index.add(["README.md"])
+    repo.index.commit("Initial commit")
+    
+    return repo
+
+
+def create_commit_in_repo(repo: git.Repo, message: str, files: List[str]) -> str:
+    """Create a commit with specified files in the repository."""
+    repo_dir = repo.working_dir
+    
+    # Create/modify files
+    for filename in files:
+        filepath = os.path.join(repo_dir, filename)
+        with open(filepath, "w") as f:
+            f.write(f"Content for {filename}\n")
+    
+    # Stage and commit
+    repo.index.add(files)
+    commit = repo.index.commit(message)
+    
+    return commit.hexsha
+
+
+def create_branch_and_switch(repo: git.Repo, branch_name: str) -> tuple:
+    """Create a new branch and switch to it, returning (from_branch, to_branch)."""
+    from_branch = repo.active_branch.name
+    
+    # Create and checkout new branch
+    new_branch = repo.create_head(branch_name)
+    new_branch.checkout()
+    
+    return from_branch, branch_name
+
+
+def create_uncommitted_changes(repo: git.Repo, files: List[tuple]) -> None:
+    """Create uncommitted changes in the repository."""
+    repo_dir = repo.working_dir
+    
+    for filename, content in files:
+        filepath = os.path.join(repo_dir, filename)
+        with open(filepath, "w") as f:
+            f.write(content)
+
+
+# Property-based tests
+
+@settings(max_examples=100, deadline=5000)
+@given(commit_data=valid_commit_data())
+def test_property_1_complete_commit_signal_capture(commit_data):
+    """
+    Feature: context-anchor, Property 1: Complete Commit Signal Capture
+    
+    **Validates: Requirements 1.1, 1.5, 1.6**
+    
+    For any commit created in a monitored repository, the captured signal must contain:
+    - commit hash
+    - message
+    - timestamp
+    - changed files
+    - repository identifier
+    - capture source
+    """
+    message, files = commit_data
+    
+    # Create temporary repository
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Setup test repository
+        repo = create_test_repo(temp_dir)
+        
+        # Create a commit with the generated data
+        commit_hash = create_commit_in_repo(repo, message, files)
+        
+        # Initialize GitObserver
+        observer = GitObserver(temp_dir)
+        
+        # Capture commit signal
+        commit_signal = observer.capture_commit_signal()
+        
+        # Verify signal is not None
+        assert commit_signal is not None, "Commit signal must be captured"
+        
+        # Verify commit hash is present and matches
+        assert hasattr(commit_signal, 'hash'), "Commit signal must contain hash"
+        assert commit_signal.hash == commit_hash, \
+            f"Commit hash must match: expected {commit_hash}, got {commit_signal.hash}"
+        
+        # Verify message is present and matches
+        assert hasattr(commit_signal, 'message'), "Commit signal must contain message"
+        assert commit_signal.message == message, \
+            f"Commit message must match: expected '{message}', got '{commit_signal.message}'"
+        
+        # Verify timestamp is present and valid
+        assert hasattr(commit_signal, 'timestamp'), "Commit signal must contain timestamp"
+        assert isinstance(commit_signal.timestamp, datetime), \
+            "Commit timestamp must be a datetime object"
+        
+        # Verify changed files are present
+        assert hasattr(commit_signal, 'files_changed'), \
+            "Commit signal must contain files_changed"
+        assert isinstance(commit_signal.files_changed, list), \
+            "files_changed must be a list"
+        
+        # Verify all committed files are in the signal
+        for filename in files:
+            assert filename in commit_signal.files_changed, \
+                f"File '{filename}' must be in files_changed list"
+        
+        # Verify repository identifier can be generated
+        repository_id = observer.generate_repository_id()
+        assert repository_id is not None, "Repository identifier must be generated"
+        assert isinstance(repository_id, str), "Repository identifier must be a string"
+        assert len(repository_id) == 64, \
+            "Repository identifier must be 64 characters (SHA-256 hash)"
+        
+        # Note: capture_source is not part of CommitInfo model but would be added
+        # when CommitInfo is wrapped in CaptureSignals. This validates the commit
+        # signal contains all required data that will be used in CaptureSignals.
+
+
+@settings(max_examples=100, deadline=5000)
+@given(branch_name=valid_branch_names())
+def test_property_2_complete_branch_switch_signal_capture(branch_name):
+    """
+    Feature: context-anchor, Property 2: Complete Branch Switch Signal Capture
+    
+    **Validates: Requirements 1.2, 1.5, 1.6**
+    
+    For any branch switch in a monitored repository, the captured signal must contain:
+    - source branch
+    - target branch
+    - timestamp
+    - repository identifier
+    - capture source
+    """
+    # Create temporary repository
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Setup test repository
+        repo = create_test_repo(temp_dir)
+        
+        # Get initial branch name
+        from_branch = repo.active_branch.name
+        
+        # Create and switch to new branch
+        try:
+            new_branch = repo.create_head(branch_name)
+            new_branch.checkout()
+        except Exception:
+            # If branch name is invalid for git, skip this example
+            assume(False)
+        
+        # Initialize GitObserver
+        observer = GitObserver(temp_dir)
+        
+        # Capture branch switch signal
+        branch_signal = observer.capture_branch_switch(from_branch, branch_name)
+        
+        # Verify signal is not None
+        assert branch_signal is not None, "Branch switch signal must be captured"
+        
+        # Verify source branch is present and matches
+        assert 'from_branch' in branch_signal, \
+            "Branch switch signal must contain from_branch"
+        assert branch_signal['from_branch'] == from_branch, \
+            f"Source branch must match: expected '{from_branch}', got '{branch_signal['from_branch']}'"
+        
+        # Verify target branch is present and matches
+        assert 'to_branch' in branch_signal, \
+            "Branch switch signal must contain to_branch"
+        assert branch_signal['to_branch'] == branch_name, \
+            f"Target branch must match: expected '{branch_name}', got '{branch_signal['to_branch']}'"
+        
+        # Verify timestamp is present and valid
+        assert 'timestamp' in branch_signal, \
+            "Branch switch signal must contain timestamp"
+        assert isinstance(branch_signal['timestamp'], datetime), \
+            "Branch switch timestamp must be a datetime object"
+        
+        # Verify repository identifier is present
+        assert 'repository_id' in branch_signal, \
+            "Branch switch signal must contain repository_id"
+        assert isinstance(branch_signal['repository_id'], str), \
+            "Repository identifier must be a string"
+        assert len(branch_signal['repository_id']) == 64, \
+            "Repository identifier must be 64 characters (SHA-256 hash)"
+        
+        # Note: capture_source would be added when this signal is wrapped in
+        # CaptureSignals. This validates the branch switch signal contains all
+        # required data that will be used in CaptureSignals.
+
+
+@settings(max_examples=100, deadline=5000)
+@given(file_modifications=valid_file_modifications())
+def test_property_3_complete_diff_signal_capture(file_modifications):
+    """
+    Feature: context-anchor, Property 3: Complete Diff Signal Capture
+    
+    **Validates: Requirements 1.3, 1.5, 1.6**
+    
+    For any diff generated in a monitored repository, the captured signal must contain:
+    - file paths
+    - change summary
+    - repository identifier
+    - capture source
+    """
+    # Create temporary repository
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Setup test repository
+        repo = create_test_repo(temp_dir)
+        
+        # Create uncommitted changes
+        create_uncommitted_changes(repo, file_modifications)
+        
+        # Initialize GitObserver
+        observer = GitObserver(temp_dir)
+        
+        # Capture diff signal
+        diff_signal = observer.capture_diff_signal(source="test")
+        
+        # Verify signal is not None
+        assert diff_signal is not None, "Diff signal must be captured"
+        
+        # Verify file paths are present
+        assert 'file_paths' in diff_signal, \
+            "Diff signal must contain file_paths"
+        assert isinstance(diff_signal['file_paths'], list), \
+            "file_paths must be a list"
+        
+        # Verify all modified files are in the signal
+        expected_files = [filename for filename, _ in file_modifications]
+        for filename in expected_files:
+            assert filename in diff_signal['file_paths'], \
+                f"File '{filename}' must be in file_paths list"
+        
+        # Verify change summary is present
+        assert 'files_changed' in diff_signal, \
+            "Diff signal must contain files_changed count"
+        assert isinstance(diff_signal['files_changed'], int), \
+            "files_changed must be an integer"
+        assert diff_signal['files_changed'] == len(expected_files), \
+            f"files_changed count must match: expected {len(expected_files)}, got {diff_signal['files_changed']}"
+        
+        assert 'lines_added' in diff_signal, \
+            "Diff signal must contain lines_added"
+        assert isinstance(diff_signal['lines_added'], int), \
+            "lines_added must be an integer"
+        
+        assert 'lines_deleted' in diff_signal, \
+            "Diff signal must contain lines_deleted"
+        assert isinstance(diff_signal['lines_deleted'], int), \
+            "lines_deleted must be an integer"
+        
+        # Verify repository identifier is present
+        assert 'repository_id' in diff_signal, \
+            "Diff signal must contain repository_id"
+        assert isinstance(diff_signal['repository_id'], str), \
+            "Repository identifier must be a string"
+        assert len(diff_signal['repository_id']) == 64, \
+            "Repository identifier must be 64 characters (SHA-256 hash)"
+        
+        # Verify capture source is present and matches
+        assert 'capture_source' in diff_signal, \
+            "Diff signal must contain capture_source"
+        assert diff_signal['capture_source'] == "test", \
+            f"Capture source must match: expected 'test', got '{diff_signal['capture_source']}'"
