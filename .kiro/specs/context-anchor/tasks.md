@@ -89,7 +89,7 @@ The system consists of:
     - Implement hook status detection (active, degraded, unavailable)
     - _Requirements: 5.6, 7.6_
 
-  - [-] 3.8 Write unit tests for git operations
+  - [x] 3.8 Write unit tests for git operations
     - Test repository detection from subdirectories
     - Test git availability check
     - Test hook installation with various permission scenarios
