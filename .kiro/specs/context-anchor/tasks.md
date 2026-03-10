@@ -37,11 +37,11 @@ The system consists of:
     - **Property 6: Complete Context Snapshot Schema**
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.7**
 
-  - [ ]* 2.3 Write property test for snapshot word limit constraint
+  - [ ] 2.3 Write property test for snapshot word limit constraint
     - **Property 7: Snapshot Word Limit Constraint**
     - **Validates: Requirements 3.6**
 
-  - [ ]* 2.4 Write property test for next steps format validation
+  - [ ] 2.4 Write property test for next steps format validation
     - **Property 9: Next Steps Format Validation**
     - **Validates: Requirements 3.9**
 
@@ -61,7 +61,7 @@ The system consists of:
     - Implement capture_diff_signal (file paths, summary stats)
     - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.6_
 
-  - [ ]* 3.3 Write property tests for signal capture completeness
+  - [ ] 3.3 Write property tests for signal capture completeness
     - **Property 1: Complete Commit Signal Capture**
     - **Property 2: Complete Branch Switch Signal Capture**
     - **Property 3: Complete Diff Signal Capture**
@@ -74,11 +74,11 @@ The system consists of:
     - Implement format_pr_link and format_issue_link
     - _Requirements: 10.1, 10.2, 10.3, 10.6_
 
-  - [ ]* 3.5 Write property test for reference extraction
+  - [ ] 3.5 Write property test for reference extraction
     - **Property 4: Reference Extraction from Commit Messages**
     - **Validates: Requirements 1.4, 10.2, 10.3, 10.6**
 
-  - [ ]* 3.6 Write property test for GitHub remote parsing
+  - [ ] 3.6 Write property test for GitHub remote parsing
     - **Property 35: GitHub Remote Parsing**
     - **Validates: Requirements 10.1**
 
@@ -89,7 +89,7 @@ The system consists of:
     - Implement hook status detection (active, degraded, unavailable)
     - _Requirements: 5.6, 7.6_
 
-  - [ ]* 3.8 Write unit tests for git operations
+  - [ ] 3.8 Write unit tests for git operations
     - Test repository detection from subdirectories
     - Test git availability check
     - Test hook installation with various permission scenarios
@@ -116,15 +116,15 @@ The system consists of:
     - Add retry_count tracking
     - _Requirements: 8.7_
 
-  - [ ]* 5.3 Write property test for offline queue capacity
+  - [ ] 5.3 Write property test for offline queue capacity
     - **Property 29: Offline Queue Capacity**
     - **Validates: Requirements 8.6**
 
-  - [ ]* 5.4 Write property test for exponential backoff
+  - [ ] 5.4 Write property test for exponential backoff
     - **Property 30: Exponential Backoff and Expiration**
     - **Validates: Requirements 8.7**
 
-  - [ ]* 5.5 Write unit tests for offline operations
+  - [ ] 5.5 Write unit tests for offline operations
     - Test queue storage and retrieval
     - Test operation expiration
     - Test cache functionality
@@ -145,14 +145,14 @@ The system consists of:
     - Support redact_patterns list configuration
     - _Requirements: 15.2, 15.3, 15.4_
 
-  - [ ]* 6.3 Write property tests for configuration
+  - [ ] 6.3 Write property tests for configuration
     - **Property 46: Custom Prompt Configuration**
     - **Property 47: Custom Retention Configuration**
     - **Property 48: Signal Monitoring Configuration**
     - **Property 49: Invalid Configuration Handling**
     - **Validates: Requirements 15.2, 15.3, 15.4, 15.5, 15.6**
 
-  - [ ]* 6.4 Write unit tests for configuration edge cases
+  - [ ] 6.4 Write unit tests for configuration edge cases
     - Test missing config file (use defaults)
     - Test invalid YAML syntax
     - Test invalid field types
@@ -196,7 +196,7 @@ The system consists of:
     - Set up CloudWatch alarms for cost alerts
     - _Requirements: 14.5, 14.6_
 
-  - [ ]* 7.5 Write unit tests for CDK constructs
+  - [ ] 7.5 Write unit tests for CDK constructs
     - Test DynamoDB table configuration
     - Test Lambda function configuration
     - Test API Gateway endpoint configuration
@@ -221,24 +221,24 @@ The system consists of:
     - Ensure deleted snapshots excluded from active reads immediately
     - _Requirements: 4.6, 9.4_
 
-  - [ ]* 9.3 Write property test for storage round trip
+  - [ ] 9.3 Write property test for storage round trip
     - **Property 10: Context Storage Round Trip**
     - **Validates: Requirements 4.1**
 
-  - [ ]* 9.4 Write property tests for indexing
+  - [ ] 9.4 Write property tests for indexing
     - **Property 11: Repository and Branch Indexing**
     - **Property 12: Timestamp Indexing**
     - **Validates: Requirements 4.2, 4.3**
 
-  - [ ]* 9.5 Write property test for soft delete retention
+  - [ ] 9.5 Write property test for soft delete retention
     - **Property 14: Soft Delete Retention**
     - **Validates: Requirements 4.6**
 
-  - [ ]* 9.6 Write property test for developer scoped storage
+  - [ ] 9.6 Write property test for developer scoped storage
     - **Property 32: Developer Scoped Storage**
     - **Validates: Requirements 9.3**
 
-  - [ ]* 9.7 Write unit tests for Context Store operations
+  - [ ] 9.7 Write unit tests for Context Store operations
     - Test pagination with next_token
     - Test empty result sets
     - Test DynamoDB error handling
@@ -261,11 +261,11 @@ The system consists of:
     - Add action verb requirement for Next Steps
     - _Requirements: 3.6, 3.9_
 
-  - [ ]* 10.3 Write property test for context capture signal inclusion
+  - [ ] 10.3 Write property test for context capture signal inclusion
     - **Property 5: Context Capture Includes All Signal Types**
     - **Validates: Requirements 2.1, 2.3, 2.4, 2.6**
 
-  - [ ]* 10.4 Write unit tests for Agent Core
+  - [ ] 10.4 Write unit tests for Agent Core
     - Test Bedrock prompt construction
     - Test response parsing with various formats
     - Test validation error handling
@@ -303,7 +303,7 @@ The system consists of:
     - No authentication required
     - _Requirements: 14.4_
 
-  - [ ]* 11.5 Write integration tests for Lambda handlers
+  - [ ] 11.5 Write integration tests for Lambda handlers
     - Test capture flow with mocked Bedrock and DynamoDB
     - Test retrieval with various query parameters
     - Test deletion flow
@@ -331,7 +331,7 @@ The system consists of:
     - Return clear error messages for network failures
     - _Requirements: 8.4, 8.7_
 
-  - [ ]* 13.3 Write unit tests for API client
+  - [ ] 13.3 Write unit tests for API client
     - Test successful API calls with mocked responses
     - Test network error handling
     - Test timeout handling
@@ -354,13 +354,13 @@ The system consists of:
     - Display success message or error
     - _Requirements: 7.1, 7.2, 7.3, 7.5, 7.6_
 
-  - [ ]* 14.3 Write property tests for init command
+  - [ ] 14.3 Write property tests for init command
     - **Property 20: Initialization Creates Configuration**
     - **Property 21: Git Availability Check**
     - **Property 67: Re-Initialization Detection**
     - **Validates: Requirements 7.2, 7.4, 7.3**
 
-  - [ ]* 14.4 Write unit tests for init command
+  - [ ] 14.4 Write unit tests for init command
     - Test initialization in valid repository
     - Test re-initialization detection
     - Test initialization outside repository
@@ -386,17 +386,17 @@ The system consists of:
     - Log redaction events
     - _Requirements: 9.6_
 
-  - [ ]* 15.3 Write property tests for save-context
+  - [ ] 15.3 Write property tests for save-context
     - **Property 54: Exact Prompt Wording**
     - **Property 56: Intent Capture Without Uncommitted Changes**
     - **Property 34: Secret Redaction**
     - **Validates: Requirements 2.2, 2.7, 9.6**
 
-  - [ ]* 15.4 Write property test for no source code transmission
+  - [ ] 15.4 Write property test for no source code transmission
     - **Property 33: No Source Code Transmission**
     - **Validates: Requirements 9.5**
 
-  - [ ]* 15.5 Write unit tests for save-context
+  - [ ] 15.5 Write unit tests for save-context
     - Test with uncommitted changes
     - Test without uncommitted changes
     - Test with network unavailable (offline mode)
@@ -423,13 +423,13 @@ The system consists of:
     - Use rich terminal formatting for readability
     - _Requirements: 3.8, 10.4_
 
-  - [ ]* 16.3 Write property tests for context display
+  - [ ] 16.3 Write property tests for context display
     - **Property 8: Snapshot Display Order**
     - **Property 16: Complete Context Display**
     - **Property 36: GitHub Link Generation**
     - **Validates: Requirements 3.8, 5.2, 5.3, 5.4, 10.4**
 
-  - [ ]* 16.4 Write unit tests for show-context
+  - [ ] 16.4 Write unit tests for show-context
     - Test display with complete context
     - Test display with missing PR/issue data
     - Test display with no context found
@@ -455,14 +455,14 @@ The system consists of:
     - Support pagination
     - _Requirements: 12.1, 12.2, 12.3, 12.5, 12.6_
 
-  - [ ]* 17.3 Write property tests for history
+  - [ ] 17.3 Write property tests for history
     - **Property 41: Chronological Snapshot Ordering**
     - **Property 42: History Display Completeness**
     - **Property 43: Default History Limit**
     - **Property 44: History Pagination**
     - **Validates: Requirements 12.1, 12.3, 12.5, 12.6**
 
-  - [ ]* 17.4 Write unit tests for list and history commands
+  - [ ] 17.4 Write unit tests for list and history commands
     - Test with multiple snapshots
     - Test with empty results
     - Test pagination
@@ -477,11 +477,11 @@ The system consists of:
     - Handle errors (not found, network failure)
     - _Requirements: 6.6, 9.4_
 
-  - [ ]* 18.2 Write property test for deletion irreversibility
+  - [ ] 18.2 Write property test for deletion irreversibility
     - **Property 70: Deletion Irreversibility Semantics**
     - **Validates: Requirements 9.4**
 
-  - [ ]* 18.3 Write unit tests for delete-context
+  - [ ] 18.3 Write unit tests for delete-context
     - Test successful deletion
     - Test deletion of non-existent snapshot
     - Test offline mode (queue deletion)
@@ -505,14 +505,14 @@ The system consists of:
     - Complete restoration within 2 seconds
     - _Requirements: 5.1, 5.5, 5.8_
 
-  - [ ]* 20.3 Write property tests for restoration
+  - [ ] 20.3 Write property tests for restoration
     - **Property 15: Latest Snapshot Retrieval**
     - **Property 17: Fallback Branch Detection**
     - **Property 60: Primary Branch-Switch Detection Path**
     - **Property 61: No-Context Branch Message**
     - **Validates: Requirements 5.1, 5.6, 5.7, 5.8**
 
-  - [ ]* 20.4 Write unit tests for automatic restoration
+  - [ ] 20.4 Write unit tests for automatic restoration
     - Test hook-triggered restoration
     - Test fallback detection
     - Test with no saved context
@@ -542,14 +542,14 @@ The system consists of:
     - Calculate and include time-to-productivity metrics
     - _Requirements: 16.5_
 
-  - [ ]* 21.4 Write property tests for metrics
+  - [ ] 21.4 Write property tests for metrics
     - **Property 50: Event Emission for Operations**
     - **Property 51: Resume Session Event**
     - **Property 53: Time to Productivity Calculation**
     - **Property 87: Metrics Export Formats**
     - **Validates: Requirements 16.1, 16.2, 16.4, 16.5**
 
-  - [ ]* 21.5 Write unit tests for metrics
+  - [ ] 21.5 Write unit tests for metrics
     - Test event emission
     - Test time-to-productivity calculation
     - Test export in JSON format
@@ -572,7 +572,7 @@ The system consists of:
     - Handle git command failures (log and continue)
     - _Requirements: 8.1, 8.2, 8.3, 10.5_
 
-  - [ ]* 22.3 Write property tests for error handling
+  - [ ] 22.3 Write property tests for error handling
     - **Property 24: Offline Context Caching**
     - **Property 25: Graceful Agent Core Degradation**
     - **Property 26: Git Operation Error Resilience**
@@ -582,7 +582,7 @@ The system consists of:
     - **Property 37: GitHub Rate Limit Resilience**
     - **Validates: Requirements 8.1, 8.2, 8.3, 8.4, 8.5, 8.8, 10.5**
 
-  - [ ]* 22.4 Write unit tests for error scenarios
+  - [ ] 22.4 Write unit tests for error scenarios
     - Test network unavailable scenarios
     - Test git command failures
     - Test invalid data handling
@@ -607,14 +607,14 @@ The system consists of:
     - Display error when executed outside repository
     - _Requirements: 6.5, 11.5_
 
-  - [ ]* 23.4 Write property tests for CLI behavior
+  - [ ] 23.4 Write property tests for CLI behavior
     - **Property 18: Invalid Command Help Display**
     - **Property 19: Repository-Relative Command Execution**
     - **Property 45: Long Operation Status Updates**
     - **Property 72: Outside-Repository Execution Guard**
     - **Validates: Requirements 6.4, 6.5, 11.5, 13.5**
 
-  - [ ]* 23.5 Write unit tests for CLI UX
+  - [ ] 23.5 Write unit tests for CLI UX
     - Test help display
     - Test repository detection
     - Test status indicators
@@ -638,14 +638,14 @@ The system consists of:
     - Ensure Context_Store queries include repository_id
     - _Requirements: 11.2, 11.3_
 
-  - [ ]* 25.3 Write property tests for multi-repository support
+  - [ ] 25.3 Write property tests for multi-repository support
     - **Property 38: Repository Isolation**
     - **Property 39: Repository Detection from Working Directory**
     - **Property 40: Repository Identifier Uniqueness**
     - **Property 71: Simultaneous Multi-Repository Monitoring**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.4, 11.6**
 
-  - [ ]* 25.4 Write unit tests for multi-repository scenarios
+  - [ ] 25.4 Write unit tests for multi-repository scenarios
     - Test with multiple initialized repositories
     - Test repository ID collision scenarios
     - Test context isolation between repositories
@@ -664,12 +664,12 @@ The system consists of:
     - Implement API key management
     - _Requirements: 9.3_
 
-  - [ ]* 26.3 Write property tests for security
+  - [ ] 26.3 Write property tests for security
     - **Property 68: Encryption at Rest Enforcement**
     - **Property 69: Encryption in Transit Enforcement**
     - **Validates: Requirements 9.1, 9.2**
 
-  - [ ]* 26.4 Write unit tests for privacy features
+  - [ ] 26.4 Write unit tests for privacy features
     - Test source code exclusion from transmitted data
     - Test secret redaction
     - Test developer-scoped queries
@@ -692,7 +692,7 @@ The system consists of:
     - Create test fixtures for common scenarios
     - _Requirements: All property tests_
 
-  - [ ]* 27.3 Write remaining property tests not covered in component tasks
+  - [ ] 27.3 Write remaining property tests not covered in component tasks
     - **Property 13: Retention Period Enforcement**
     - **Property 22: Initialization Failure Error Messages**
     - **Property 23: Hook Status Reporting**
@@ -760,7 +760,7 @@ The system consists of:
     - Target < 300ms acknowledgement at p95
     - _Requirements: 13.4_
 
-  - [ ]* 30.5 Write performance benchmark tests
+  - [ ] 30.5 Write performance benchmark tests
     - Benchmark CLI dispatch latency
     - Benchmark git hook overhead
     - Benchmark context restoration with large datasets
@@ -850,7 +850,7 @@ The system consists of:
 
 ## Notes
 
-- Tasks marked with `*` are optional and can be skipped for faster MVP
+- All tasks in this plan are required for delivery quality and completion.
 - Each task references specific requirements for traceability
 - Checkpoints ensure incremental validation at key milestones
 - Property tests validate universal correctness properties with Hypothesis (minimum 100 iterations)
@@ -860,4 +860,3 @@ The system consists of:
 - Python 3.11+ is the implementation language for all components
 - AWS CDK (Python) is used for infrastructure as code
 - The system is designed to stay within AWS Free Tier limits with cost guardrails
-
