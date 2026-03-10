@@ -345,3 +345,272 @@ def test_property_3_complete_diff_signal_capture(file_modifications):
             "Diff signal must contain capture_source"
         assert diff_signal['capture_source'] == "test", \
             f"Capture source must match: expected 'test', got '{diff_signal['capture_source']}'"
+
+
+# Hypothesis strategies for commit messages with references
+
+@st.composite
+def commit_message_with_pr_references(draw):
+    """Generate commit messages with PR references."""
+    # Choose number of PR references (0-5)
+    num_prs = draw(st.integers(min_value=1, max_value=5))
+
+    # Generate PR numbers
+    pr_numbers = [draw(st.integers(min_value=1, max_value=99999)) for _ in range(num_prs)]
+
+    # Choose PR reference patterns
+    patterns = ['#{}', 'PR #{}', 'pull request #{}']
+
+    # Build commit message with PR references
+    message_parts = [draw(st.text(min_size=5, max_size=50, alphabet=st.characters(
+        blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00#'
+    )))]
+
+    for pr_num in pr_numbers:
+        pattern = draw(st.sampled_from(patterns))
+        message_parts.append(pattern.format(pr_num))
+        # Add some text between references
+        if draw(st.booleans()):
+            message_parts.append(draw(st.text(min_size=1, max_size=30, alphabet=st.characters(
+                blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00#'
+            ))))
+
+    message = ' '.join(message_parts)
+    assume(message.strip() != "")
+
+    return message, pr_numbers
+
+
+@st.composite
+def commit_message_with_issue_references(draw):
+    """Generate commit messages with issue references using keywords."""
+    # Choose number of issue references (1-5)
+    num_issues = draw(st.integers(min_value=1, max_value=5))
+
+    # Generate issue numbers
+    issue_numbers = [draw(st.integers(min_value=1, max_value=99999)) for _ in range(num_issues)]
+
+    # Keywords that indicate issue references
+    keywords = ['fixes', 'closes', 'resolves', 'refs', 'fix', 'close', 'resolve', 'ref']
+
+    # Build commit message with issue references
+    message_parts = [draw(st.text(min_size=5, max_size=50, alphabet=st.characters(
+        blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00#'
+    )))]
+
+    for issue_num in issue_numbers:
+        keyword = draw(st.sampled_from(keywords))
+        message_parts.append(f"{keyword} #{issue_num}")
+        # Add some text between references
+        if draw(st.booleans()):
+            message_parts.append(draw(st.text(min_size=1, max_size=30, alphabet=st.characters(
+                blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00#'
+            ))))
+
+    message = ' '.join(message_parts)
+    assume(message.strip() != "")
+
+    return message, issue_numbers
+
+
+@st.composite
+def commit_message_with_mixed_references(draw):
+    """Generate commit messages with both PR and issue references."""
+    # Generate PR references
+    num_prs = draw(st.integers(min_value=0, max_value=3))
+    pr_numbers = [draw(st.integers(min_value=1, max_value=99999)) for _ in range(num_prs)]
+
+    # Generate issue references
+    num_issues = draw(st.integers(min_value=0, max_value=3))
+    issue_numbers = [draw(st.integers(min_value=1, max_value=99999)) for _ in range(num_issues)]
+
+    # Ensure at least one reference exists
+    assume(num_prs > 0 or num_issues > 0)
+
+    # Build commit message
+    message_parts = [draw(st.text(min_size=5, max_size=50, alphabet=st.characters(
+        blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00#'
+    )))]
+
+    # Add PR references
+    pr_patterns = ['#{}', 'PR #{}', 'pull request #{}']
+    for pr_num in pr_numbers:
+        pattern = draw(st.sampled_from(pr_patterns))
+        message_parts.append(pattern.format(pr_num))
+        if draw(st.booleans()):
+            message_parts.append(draw(st.text(min_size=1, max_size=20, alphabet=st.characters(
+                blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00#'
+            ))))
+
+    # Add issue references
+    issue_keywords = ['fixes', 'closes', 'resolves', 'refs', 'fix', 'close', 'resolve', 'ref']
+    for issue_num in issue_numbers:
+        keyword = draw(st.sampled_from(issue_keywords))
+        message_parts.append(f"{keyword} #{issue_num}")
+        if draw(st.booleans()):
+            message_parts.append(draw(st.text(min_size=1, max_size=20, alphabet=st.characters(
+                blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00#'
+            ))))
+
+    message = ' '.join(message_parts)
+    assume(message.strip() != "")
+
+    return message, pr_numbers, issue_numbers
+
+
+# Property 4: Reference Extraction from Commit Messages
+
+@settings(max_examples=100, deadline=5000)
+@given(message_data=commit_message_with_pr_references())
+def test_property_4_pr_reference_extraction(message_data):
+    """
+    Feature: context-anchor, Property 4: Reference Extraction from Commit Messages (PR)
+
+    **Validates: Requirements 1.4, 10.2, 10.3, 10.6**
+
+    For any commit message containing PR references (with patterns: #, PR #, pull request #),
+    the GitHubIntegration component must correctly extract and store all reference numbers.
+    """
+    from src.contextanchor.github_integration import GitHubIntegration
+
+    message, expected_pr_numbers = message_data
+
+    # Initialize GitHubIntegration
+    github_integration = GitHubIntegration()
+
+    # Extract PR references
+    extracted_prs = github_integration.parse_pr_references(message)
+
+    # Verify all expected PR numbers were extracted
+    assert extracted_prs is not None, "PR references must be extracted"
+    assert isinstance(extracted_prs, list), "Extracted PRs must be a list"
+
+    # Convert to sets for comparison (order doesn't matter, duplicates removed)
+    expected_set = set(expected_pr_numbers)
+    extracted_set = set(extracted_prs)
+
+    assert extracted_set == expected_set, \
+        f"All PR numbers must be extracted. Expected {expected_set}, got {extracted_set}. Message: '{message}'"
+
+
+@settings(max_examples=100, deadline=5000)
+@given(message_data=commit_message_with_issue_references())
+def test_property_4_issue_reference_extraction(message_data):
+    """
+    Feature: context-anchor, Property 4: Reference Extraction from Commit Messages (Issues)
+
+    **Validates: Requirements 1.4, 10.2, 10.3, 10.6**
+
+    For any commit message containing issue references with keywords (fixes, closes, resolves, refs),
+    the GitHubIntegration component must correctly extract and store all reference numbers.
+    """
+    from src.contextanchor.github_integration import GitHubIntegration
+
+    message, expected_issue_numbers = message_data
+
+    # Initialize GitHubIntegration
+    github_integration = GitHubIntegration()
+
+    # Extract issue references
+    extracted_issues = github_integration.parse_issue_references(message)
+
+    # Verify all expected issue numbers were extracted
+    assert extracted_issues is not None, "Issue references must be extracted"
+    assert isinstance(extracted_issues, list), "Extracted issues must be a list"
+
+    # Convert to sets for comparison (order doesn't matter, duplicates removed)
+    expected_set = set(expected_issue_numbers)
+    extracted_set = set(extracted_issues)
+
+    assert extracted_set == expected_set, \
+        f"All issue numbers must be extracted. Expected {expected_set}, got {extracted_set}. Message: '{message}'"
+
+
+@settings(max_examples=100, deadline=5000)
+@given(message_data=commit_message_with_mixed_references())
+def test_property_4_mixed_reference_extraction(message_data):
+    """
+    Feature: context-anchor, Property 4: Reference Extraction from Commit Messages (Mixed)
+
+    **Validates: Requirements 1.4, 10.2, 10.3, 10.6**
+
+    For any commit message containing both PR and issue references, the GitHubIntegration
+    component must correctly extract and store all reference numbers separately.
+    
+    Note: Issue references with keywords (e.g., "fixes #123") will also be picked up as
+    PR references because they contain the #number pattern. This is expected behavior.
+    """
+    from src.contextanchor.github_integration import GitHubIntegration
+
+    message, expected_pr_numbers, expected_issue_numbers = message_data
+
+    # Initialize GitHubIntegration
+    github_integration = GitHubIntegration()
+
+    # Extract PR references
+    extracted_prs = github_integration.parse_pr_references(message)
+
+    # Extract issue references
+    extracted_issues = github_integration.parse_issue_references(message)
+
+    # Verify PR extraction
+    assert extracted_prs is not None, "PR references must be extracted"
+    assert isinstance(extracted_prs, list), "Extracted PRs must be a list"
+
+    # PR references should include explicit PR numbers AND issue numbers (since "fixes #123" contains #123)
+    expected_pr_set = set(expected_pr_numbers) | set(expected_issue_numbers)
+    extracted_pr_set = set(extracted_prs)
+
+    assert extracted_pr_set == expected_pr_set, \
+        f"All PR numbers must be extracted. Expected {expected_pr_set}, got {extracted_pr_set}. Message: '{message}'"
+
+    # Verify issue extraction (only those with keywords)
+    assert extracted_issues is not None, "Issue references must be extracted"
+    assert isinstance(extracted_issues, list), "Extracted issues must be a list"
+
+    expected_issue_set = set(expected_issue_numbers)
+    extracted_issue_set = set(extracted_issues)
+
+    assert extracted_issue_set == expected_issue_set, \
+        f"All issue numbers must be extracted. Expected {expected_issue_set}, got {extracted_issue_set}. Message: '{message}'"
+
+
+@settings(max_examples=100, deadline=5000)
+@given(
+    message=st.text(min_size=10, max_size=200, alphabet=st.characters(
+        blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00#'
+    ))
+)
+def test_property_4_no_false_positives(message):
+    """
+    Feature: context-anchor, Property 4: Reference Extraction from Commit Messages (No False Positives)
+
+    **Validates: Requirements 1.4, 10.2, 10.3, 10.6**
+
+    For any commit message without PR or issue reference patterns, the GitHubIntegration
+    component must not extract any references (no false positives).
+    """
+    from src.contextanchor.github_integration import GitHubIntegration
+
+    # Ensure message doesn't contain reference patterns
+    assume('#' not in message)
+    assume('PR' not in message.upper())
+    assume('FIXES' not in message.upper())
+    assume('CLOSES' not in message.upper())
+    assume('RESOLVES' not in message.upper())
+    assume('REFS' not in message.upper())
+
+    # Initialize GitHubIntegration
+    github_integration = GitHubIntegration()
+
+    # Extract references
+    extracted_prs = github_integration.parse_pr_references(message)
+    extracted_issues = github_integration.parse_issue_references(message)
+
+    # Verify no false positives
+    assert extracted_prs == [], \
+        f"No PR references should be extracted from message without patterns. Got {extracted_prs}. Message: '{message}'"
+
+    assert extracted_issues == [], \
+        f"No issue references should be extracted from message without patterns. Got {extracted_issues}. Message: '{message}'"
+

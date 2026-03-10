@@ -61,20 +61,20 @@ The system consists of:
     - Implement capture_diff_signal (file paths, summary stats)
     - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.6_
 
-  - [-] 3.3 Write property tests for signal capture completeness
+  - [x] 3.3 Write property tests for signal capture completeness
     - **Property 1: Complete Commit Signal Capture**
     - **Property 2: Complete Branch Switch Signal Capture**
     - **Property 3: Complete Diff Signal Capture**
     - **Validates: Requirements 1.1, 1.2, 1.3, 1.5, 1.6**
 
-  - [~] 3.4 Implement GitHub integration methods
+  - [x] 3.4 Implement GitHub integration methods
     - Implement parse_remote_url to extract owner/repo from GitHub URLs
     - Implement parse_pr_references using regex patterns (#123, PR #123)
     - Implement parse_issue_references with keywords (fixes, closes, resolves, refs)
     - Implement format_pr_link and format_issue_link
     - _Requirements: 10.1, 10.2, 10.3, 10.6_
 
-  - [~] 3.5 Write property test for reference extraction
+  - [x] 3.5 Write property test for reference extraction
     - **Property 4: Reference Extraction from Commit Messages**
     - **Validates: Requirements 1.4, 10.2, 10.3, 10.6**
 
