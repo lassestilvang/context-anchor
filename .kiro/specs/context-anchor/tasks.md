@@ -33,15 +33,15 @@ The system consists of:
     - Add __post_init__ validation for ContextSnapshot (1-5 next steps, action verbs, word limits)
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.7, 3.9_
 
-  - [-] 2.2 Write property test for ContextSnapshot schema completeness
+  - [x] 2.2 Write property test for ContextSnapshot schema completeness
     - **Property 6: Complete Context Snapshot Schema**
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.7**
 
-  - [~] 2.3 Write property test for snapshot word limit constraint
+  - [x] 2.3 Write property test for snapshot word limit constraint
     - **Property 7: Snapshot Word Limit Constraint**
     - **Validates: Requirements 3.6**
 
-  - [~] 2.4 Write property test for next steps format validation
+  - [-] 2.4 Write property test for next steps format validation
     - **Property 9: Next Steps Format Validation**
     - **Validates: Requirements 3.9**
 

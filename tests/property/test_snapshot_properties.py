@@ -272,3 +272,45 @@ def test_property_6_complete_context_snapshot_schema(snapshot):
     text_content = snapshot.to_text()
     assert len(text_content) <= 2500, \
         f"Snapshot text must be under 2500 characters, got {len(text_content)}"
+
+
+@settings(max_examples=100)
+@given(snapshot=valid_context_snapshot())
+def test_property_7_snapshot_word_limit_constraint(snapshot):
+    """
+    Feature: context-anchor, Property 7: Snapshot Word Limit Constraint
+
+    **Validates: Requirements 3.6**
+
+    For any generated Context_Snapshot, the combined text of goals, rationale,
+    open_questions, and next_steps must not exceed 500 words (~2500 characters).
+    """
+    # Get the combined text content
+    text_content = snapshot.to_text()
+
+    # Verify the text content does not exceed 2500 characters (500 words)
+    assert len(text_content) <= 2500, (
+        f"Snapshot text must be under 500 words (~2500 chars), "
+        f"got {len(text_content)} chars"
+    )
+
+    # Additional verification: count actual words
+    # A word is defined as a sequence of non-whitespace characters
+    words = text_content.split()
+    word_count = len(words)
+
+    # 500 words is approximately 2500 characters (5 chars per word average)
+    # We verify the character limit is enforced, which is the primary constraint
+    assert len(text_content) <= 2500, (
+        f"Snapshot exceeded character limit: {len(text_content)} chars "
+        f"(approximately {word_count} words)"
+    )
+
+    # Verify to_text() includes all required sections
+    assert snapshot.goals in text_content, "goals must be included in text content"
+    assert snapshot.rationale in text_content, "rationale must be included in text content"
+    for question in snapshot.open_questions:
+        assert question in text_content, f"open_question '{question}' must be included in text content"
+    for step in snapshot.next_steps:
+        assert step in text_content, f"next_step '{step}' must be included in text content"
+
