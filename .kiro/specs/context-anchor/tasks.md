@@ -78,11 +78,11 @@ The system consists of:
     - **Property 4: Reference Extraction from Commit Messages**
     - **Validates: Requirements 1.4, 10.2, 10.3, 10.6**
 
-  - [~] 3.6 Write property test for GitHub remote parsing
+  - [x] 3.6 Write property test for GitHub remote parsing
     - **Property 35: GitHub Remote Parsing**
     - **Validates: Requirements 10.1**
 
-  - [~] 3.7 Implement git hook installation
+  - [-] 3.7 Implement git hook installation
     - Create post-checkout hook template for branch switch detection
     - Create post-commit hook template for commit signal capture
     - Implement install_hooks method with permission checks

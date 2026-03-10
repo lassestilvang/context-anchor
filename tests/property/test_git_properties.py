@@ -614,3 +614,174 @@ def test_property_4_no_false_positives(message):
     assert extracted_issues == [], \
         f"No issue references should be extracted from message without patterns. Got {extracted_issues}. Message: '{message}'"
 
+
+
+# Hypothesis strategies for GitHub remote URLs
+
+@st.composite
+def valid_github_owner_repo(draw):
+    """Generate valid GitHub owner and repo names."""
+    # GitHub usernames/org names: alphanumeric and hyphens, cannot start/end with hyphen
+    # Repo names: alphanumeric, hyphens, underscores, dots
+    owner_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
+    repo_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
+    
+    # Generate owner (1-39 chars, cannot start/end with hyphen)
+    owner = draw(st.text(min_size=1, max_size=39, alphabet=owner_chars))
+    owner = owner.strip('-')
+    assume(len(owner) > 0)
+    assume(not owner.startswith('-'))
+    assume(not owner.endswith('-'))
+    
+    # Generate repo name (1-100 chars)
+    repo = draw(st.text(min_size=1, max_size=100, alphabet=repo_chars))
+    repo = repo.strip('-._')
+    assume(len(repo) > 0)
+    
+    return owner, repo
+
+
+@st.composite
+def github_remote_url(draw):
+    """Generate valid GitHub remote URLs in various formats."""
+    owner, repo = draw(valid_github_owner_repo())
+    
+    # Choose URL format: HTTPS, SSH, or git://
+    format_choice = draw(st.sampled_from(['https', 'ssh', 'git']))
+    
+    # Optionally add .git extension
+    add_git_ext = draw(st.booleans())
+    git_ext = ".git" if add_git_ext else ""
+    
+    # Optionally add trailing slash (should be handled)
+    add_trailing_slash = draw(st.booleans())
+    trailing_slash = "/" if add_trailing_slash and not add_git_ext else ""
+    
+    if format_choice == 'https':
+        url = f"https://github.com/{owner}/{repo}{git_ext}{trailing_slash}"
+    elif format_choice == 'ssh':
+        url = f"git@github.com:{owner}/{repo}{git_ext}"
+    else:  # git://
+        url = f"git://github.com/{owner}/{repo}{git_ext}"
+    
+    return url, owner, repo
+
+
+# Property 35: GitHub Remote Parsing
+
+@settings(max_examples=100, deadline=5000)
+@given(url_data=github_remote_url())
+def test_property_35_github_remote_parsing(url_data):
+    """
+    Feature: context-anchor, Property 35: GitHub Remote Parsing
+    
+    **Validates: Requirements 10.1**
+    
+    For any valid GitHub remote URL (HTTPS, SSH, or git:// protocol), the GitHubIntegration
+    component must correctly extract the repository owner and name.
+    """
+    from src.contextanchor.github_integration import GitHubIntegration
+    
+    url, expected_owner, expected_repo = url_data
+    
+    # Initialize GitHubIntegration
+    github_integration = GitHubIntegration()
+    
+    # Parse the remote URL
+    result = github_integration.parse_remote_url(url)
+    
+    # Verify result is not None
+    assert result is not None, \
+        f"GitHub remote URL must be parsed successfully. URL: '{url}'"
+    
+    # Verify owner is extracted correctly
+    assert hasattr(result, 'owner'), \
+        "Parsed result must contain 'owner' attribute"
+    assert result.owner == expected_owner, \
+        f"Owner must match. Expected '{expected_owner}', got '{result.owner}'. URL: '{url}'"
+    
+    # Verify repo name is extracted correctly
+    assert hasattr(result, 'name'), \
+        "Parsed result must contain 'name' attribute"
+    assert result.name == expected_repo, \
+        f"Repo name must match. Expected '{expected_repo}', got '{result.name}'. URL: '{url}'"
+    
+    # Verify remote_url is preserved
+    assert hasattr(result, 'remote_url'), \
+        "Parsed result must contain 'remote_url' attribute"
+    assert result.remote_url == url, \
+        f"Remote URL must be preserved. Expected '{url}', got '{result.remote_url}'"
+
+
+@settings(max_examples=100, deadline=5000)
+@given(
+    url=st.text(min_size=1, max_size=200, alphabet=st.characters(
+        blacklist_categories=('Cs', 'Cc'), blacklist_characters='\x00'
+    ))
+)
+def test_property_35_non_github_urls_return_none(url):
+    """
+    Feature: context-anchor, Property 35: GitHub Remote Parsing (Negative Case)
+    
+    **Validates: Requirements 10.1**
+    
+    For any URL that is not a valid GitHub remote URL, the GitHubIntegration
+    component must return None (no false positives).
+    """
+    from src.contextanchor.github_integration import GitHubIntegration
+    
+    # Ensure URL doesn't contain github.com
+    assume('github.com' not in url.lower())
+    
+    # Initialize GitHubIntegration
+    github_integration = GitHubIntegration()
+    
+    # Parse the remote URL
+    result = github_integration.parse_remote_url(url)
+    
+    # Verify result is None for non-GitHub URLs
+    assert result is None, \
+        f"Non-GitHub URL must return None. URL: '{url}', got: {result}"
+
+
+@settings(max_examples=50, deadline=5000)
+@given(owner_repo=valid_github_owner_repo())
+def test_property_35_all_url_formats_equivalent(owner_repo):
+    """
+    Feature: context-anchor, Property 35: GitHub Remote Parsing (Format Equivalence)
+    
+    **Validates: Requirements 10.1**
+    
+    For any GitHub owner/repo pair, all valid URL formats (HTTPS, SSH, git://)
+    must parse to the same owner and repo name.
+    """
+    from src.contextanchor.github_integration import GitHubIntegration
+    
+    owner, repo = owner_repo
+    
+    # Initialize GitHubIntegration
+    github_integration = GitHubIntegration()
+    
+    # Test all URL formats
+    urls = [
+        f"https://github.com/{owner}/{repo}",
+        f"https://github.com/{owner}/{repo}.git",
+        f"git@github.com:{owner}/{repo}",
+        f"git@github.com:{owner}/{repo}.git",
+        f"git://github.com/{owner}/{repo}",
+        f"git://github.com/{owner}/{repo}.git",
+    ]
+    
+    results = []
+    for url in urls:
+        result = github_integration.parse_remote_url(url)
+        assert result is not None, \
+            f"URL format must be parsed successfully: '{url}'"
+        results.append(result)
+    
+    # Verify all formats produce the same owner and repo
+    for i, result in enumerate(results):
+        assert result.owner == owner, \
+            f"All formats must extract same owner. URL: '{urls[i]}', expected '{owner}', got '{result.owner}'"
+        assert result.name == repo, \
+            f"All formats must extract same repo. URL: '{urls[i]}', expected '{repo}', got '{result.name}'"

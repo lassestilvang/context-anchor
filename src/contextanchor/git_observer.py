@@ -433,3 +433,241 @@ class GitObserver:
             else:
                 return "modified"
 
+    def install_hooks(self) -> dict:
+        """
+        Install git hooks for automatic monitoring.
+
+        Installs post-checkout and post-commit hooks to enable automatic
+        branch switch detection and commit signal capture.
+
+        Returns:
+            Dictionary with installation result:
+            - status: "active", "degraded", or "unavailable"
+            - post_checkout_installed: bool
+            - post_commit_installed: bool
+            - error: Optional error message
+
+        Validates: Requirements 5.6, 7.6
+        """
+        if self._repo is None:
+            root = self.detect_repository_root()
+            if root is None:
+                return {
+                    "status": "unavailable",
+                    "post_checkout_installed": False,
+                    "post_commit_installed": False,
+                    "error": "Not in a git repository",
+                }
+
+        if self._repo is None:
+            return {
+                "status": "unavailable",
+                "post_checkout_installed": False,
+                "post_commit_installed": False,
+                "error": "Repository not detected",
+            }
+
+        hooks_dir = os.path.join(self._repo.git_dir, "hooks")
+
+        # Check if hooks directory exists and is writable
+        if not os.path.exists(hooks_dir):
+            try:
+                os.makedirs(hooks_dir, mode=0o755)
+            except (OSError, PermissionError) as e:
+                return {
+                    "status": "unavailable",
+                    "post_checkout_installed": False,
+                    "post_commit_installed": False,
+                    "error": f"Cannot create hooks directory: {e}",
+                }
+
+        if not os.access(hooks_dir, os.W_OK):
+            return {
+                "status": "unavailable",
+                "post_checkout_installed": False,
+                "post_commit_installed": False,
+                "error": "Hooks directory is not writable",
+            }
+
+        # Install post-checkout hook
+        post_checkout_installed = self._install_post_checkout_hook(hooks_dir)
+
+        # Install post-commit hook
+        post_commit_installed = self._install_post_commit_hook(hooks_dir)
+
+        # Determine overall status
+        if post_checkout_installed and post_commit_installed:
+            status = "active"
+        elif post_checkout_installed or post_commit_installed:
+            status = "degraded"
+        else:
+            status = "unavailable"
+
+        return {
+            "status": status,
+            "post_checkout_installed": post_checkout_installed,
+            "post_commit_installed": post_commit_installed,
+        }
+
+    def _install_post_checkout_hook(self, hooks_dir: str) -> bool:
+        """
+        Install post-checkout hook for branch switch detection.
+
+        Args:
+            hooks_dir: Path to .git/hooks directory
+
+        Returns:
+            True if hook was installed successfully, False otherwise
+        """
+        hook_path = os.path.join(hooks_dir, "post-checkout")
+
+        # Hook template
+        hook_content = """#!/bin/bash
+# .git/hooks/post-checkout
+# Installed by ContextAnchor init command
+
+PREV_HEAD=$1
+NEW_HEAD=$2
+BRANCH_SWITCH=$3
+
+if [ "$BRANCH_SWITCH" = "1" ]; then
+    # Branch switch detected, trigger context restoration
+    contextanchor _hook-branch-switch "$PREV_HEAD" "$NEW_HEAD" &
+fi
+"""
+
+        try:
+            # Check if hook already exists
+            if os.path.exists(hook_path):
+                # Read existing hook
+                with open(hook_path, "r") as f:
+                    existing_content = f.read()
+
+                # Check if our hook is already installed
+                if "contextanchor _hook-branch-switch" in existing_content:
+                    # Already installed
+                    return True
+
+                # Backup existing hook
+                backup_path = hook_path + ".backup"
+                with open(backup_path, "w") as f:
+                    f.write(existing_content)
+
+            # Write hook
+            with open(hook_path, "w") as f:
+                f.write(hook_content)
+
+            # Make executable
+            os.chmod(hook_path, 0o755)
+
+            return True
+        except (OSError, PermissionError):
+            return False
+
+    def _install_post_commit_hook(self, hooks_dir: str) -> bool:
+        """
+        Install post-commit hook for commit signal capture.
+
+        Args:
+            hooks_dir: Path to .git/hooks directory
+
+        Returns:
+            True if hook was installed successfully, False otherwise
+        """
+        hook_path = os.path.join(hooks_dir, "post-commit")
+
+        # Hook template
+        hook_content = """#!/bin/bash
+# .git/hooks/post-commit
+# Installed by ContextAnchor init command
+
+# Capture commit signal in background
+contextanchor _hook-commit &
+"""
+
+        try:
+            # Check if hook already exists
+            if os.path.exists(hook_path):
+                # Read existing hook
+                with open(hook_path, "r") as f:
+                    existing_content = f.read()
+
+                # Check if our hook is already installed
+                if "contextanchor _hook-commit" in existing_content:
+                    # Already installed
+                    return True
+
+                # Backup existing hook
+                backup_path = hook_path + ".backup"
+                with open(backup_path, "w") as f:
+                    f.write(existing_content)
+
+            # Write hook
+            with open(hook_path, "w") as f:
+                f.write(hook_content)
+
+            # Make executable
+            os.chmod(hook_path, 0o755)
+
+            return True
+        except (OSError, PermissionError):
+            return False
+
+    def get_hook_status(self) -> str:
+        """
+        Detect the status of installed git hooks.
+
+        Returns:
+            Hook status: "active", "degraded", or "unavailable"
+            - "active": Both hooks installed and working
+            - "degraded": Only one hook installed
+            - "unavailable": No hooks installed or cannot install
+
+        Validates: Requirements 7.6
+        """
+        if self._repo is None:
+            root = self.detect_repository_root()
+            if root is None:
+                return "unavailable"
+
+        if self._repo is None:
+            return "unavailable"
+
+        hooks_dir = os.path.join(self._repo.git_dir, "hooks")
+
+        # Check if hooks directory exists and is writable
+        if not os.path.exists(hooks_dir) or not os.access(hooks_dir, os.W_OK):
+            return "unavailable"
+
+        # Check post-checkout hook
+        post_checkout_path = os.path.join(hooks_dir, "post-checkout")
+        post_checkout_installed = False
+        if os.path.exists(post_checkout_path):
+            try:
+                with open(post_checkout_path, "r") as f:
+                    content = f.read()
+                    if "contextanchor _hook-branch-switch" in content:
+                        post_checkout_installed = True
+            except (OSError, PermissionError):
+                pass
+
+        # Check post-commit hook
+        post_commit_path = os.path.join(hooks_dir, "post-commit")
+        post_commit_installed = False
+        if os.path.exists(post_commit_path):
+            try:
+                with open(post_commit_path, "r") as f:
+                    content = f.read()
+                    if "contextanchor _hook-commit" in content:
+                        post_commit_installed = True
+            except (OSError, PermissionError):
+                pass
+
+        # Determine status
+        if post_checkout_installed and post_commit_installed:
+            return "active"
+        elif post_checkout_installed or post_commit_installed:
+            return "degraded"
+        else:
+            return "unavailable"
+
