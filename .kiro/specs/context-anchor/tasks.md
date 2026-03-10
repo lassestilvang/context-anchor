@@ -202,7 +202,7 @@ The system consists of:
     - Test API Gateway endpoint configuration
     - Test IAM role permissions
 
-- [-] 8. Checkpoint - Ensure all tests pass
+- [x] 8. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 
