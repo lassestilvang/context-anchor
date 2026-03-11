@@ -149,7 +149,7 @@ CRITICAL CONSTRAINTS:
                 )
                 if callback:
                     callback(snapshot)
-            except Exception:
+            except Exception:  # nosec
                 pass  # Background failures are logged, not raised
 
         thread = threading.Thread(target=_run, daemon=True)
