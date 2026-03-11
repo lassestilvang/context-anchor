@@ -24,7 +24,7 @@ The system consists of:
   - Set up virtual environment and dependency management
   - _Requirements: 14.1, 14.2, 14.3, 14.4_
 
-- [ ] 2. Implement core data models and validation
+- [~] 2. Implement core data models and validation
   - [x] 2.1 Create domain model classes with dataclasses
     - Implement ContextSnapshot with all required fields and validation
     - Implement CaptureSignals, FileChange, CommitInfo models
@@ -46,7 +46,7 @@ The system consists of:
     - **Validates: Requirements 3.9**
 
 
-- [ ] 3. Implement Git Observer component
+- [~] 3. Implement Git Observer component
   - [x] 3.1 Create GitObserver class with repository detection
     - Implement repository root detection using GitPython
     - Implement git availability check
@@ -206,8 +206,8 @@ The system consists of:
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 9. Implement Context Store component
-  - [~] 9.1 Create ContextStore class with DynamoDB client
+- [~] 9. Implement Context Store component
+  - [x] 9.1 Create ContextStore class with DynamoDB client
     - Initialize boto3 DynamoDB client
     - Implement store_snapshot method with proper key structure
     - Implement get_snapshot_by_id using BySnapshotId GSI
@@ -215,22 +215,22 @@ The system consists of:
     - Implement list_snapshots with pagination support
     - _Requirements: 4.1, 4.2, 4.3, 12.6_
 
-  - [~] 9.2 Implement soft-delete and purge operations
+  - [x] 9.2 Implement soft-delete and purge operations
     - Implement soft_delete_snapshot (set is_deleted=true, deleted_at timestamp)
     - Implement purge_deleted_snapshots (delete items where purge_after_delete_at < now)
     - Ensure deleted snapshots excluded from active reads immediately
     - _Requirements: 4.6, 9.4_
 
-  - [~] 9.3 Write property test for storage round trip
+  - [x] 9.3 Write property test for storage round trip
     - **Property 10: Context Storage Round Trip**
     - **Validates: Requirements 4.1**
 
-  - [~] 9.4 Write property tests for indexing
+  - [ ] 9.4 Write property tests for indexing
     - **Property 11: Repository and Branch Indexing**
     - **Property 12: Timestamp Indexing**
     - **Validates: Requirements 4.2, 4.3**
 
-  - [~] 9.5 Write property test for soft delete retention
+  - [ ] 9.5 Write property test for soft delete retention
     - **Property 14: Soft Delete Retention**
     - **Validates: Requirements 4.6**
 
@@ -245,7 +245,7 @@ The system consists of:
     - Test TTL expiration behavior
     - _Requirements: 4.4, 4.5, 12.6_
 
-- [ ] 10. Implement Agent Core component (Lambda)
+- [~] 10. Implement Agent Core component (Lambda)
   - [~] 10.1 Create AgentCore class with Bedrock client
     - Initialize boto3 Bedrock Runtime client
     - Implement synthesize_context method
@@ -274,7 +274,7 @@ The system consists of:
     - _Requirements: 3.5, 8.2_
 
 
-- [ ] 11. Implement Lambda handler functions
+- [~] 11. Implement Lambda handler functions
   - [~] 11.1 Create context capture Lambda handler
     - Implement handler for POST /v1/contexts
     - Parse request body (repository_id, branch, signals, developer_intent)
@@ -313,7 +313,7 @@ The system consists of:
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 13. Implement API client for CLI
+- [~] 13. Implement API client for CLI
   - [~] 13.1 Create APIClient class
     - Implement HTTP client with requests library
     - Implement create_context method (POST /v1/contexts)
@@ -338,7 +338,7 @@ The system consists of:
     - Test authentication with API key
     - Test retry logic
 
-- [ ] 14. Implement CLI command interface
+- [~] 14. Implement CLI command interface
   - [~] 14.1 Create CLI application with Click/Typer
     - Set up CLI application structure
     - Implement command group for contextanchor
@@ -368,7 +368,7 @@ The system consists of:
     - _Requirements: 7.3, 7.4, 7.5, 11.5_
 
 
-- [ ] 15. Implement save-context command
+- [~] 15. Implement save-context command
   - [~] 15.1 Create save-context command handler
     - Detect current repository and branch
     - Collect git signals using GitObserver
@@ -404,7 +404,7 @@ The system consists of:
     - Test error handling
     - _Requirements: 2.5, 2.7, 8.1, 8.2_
 
-- [ ] 16. Implement show-context command
+- [~] 16. Implement show-context command
   - [~] 16.1 Create show-context command handler
     - Detect current repository and branch
     - Support optional --branch parameter
@@ -437,7 +437,7 @@ The system consists of:
     - _Requirements: 5.8, 12.4_
 
 
-- [ ] 17. Implement list-contexts and history commands
+- [~] 17. Implement list-contexts and history commands
   - [~] 17.1 Create list-contexts command handler
     - Detect current repository
     - Query API for all contexts in repository
@@ -469,7 +469,7 @@ The system consists of:
     - Test branch filtering
     - _Requirements: 11.2, 12.1, 12.5_
 
-- [ ] 18. Implement delete-context command
+- [~] 18. Implement delete-context command
   - [~] 18.1 Create delete-context command handler
     - Accept snapshot_id as parameter
     - Call API to soft-delete snapshot
@@ -490,7 +490,7 @@ The system consists of:
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 20. Implement automatic context restoration
+- [~] 20. Implement automatic context restoration
   - [~] 20.1 Create branch switch detection mechanism
     - Implement _hook-branch-switch internal command for git hooks
     - Implement fallback branch detection on CLI invocation
@@ -519,7 +519,7 @@ The system consists of:
     - Test performance with large snapshot counts
     - _Requirements: 5.5, 5.6, 5.7, 13.6_
 
-- [ ] 21. Implement metrics and instrumentation
+- [~] 21. Implement metrics and instrumentation
   - [~] 21.1 Create MetricsCollector class
     - Implement event emission for context_capture_started, context_capture_completed, context_capture_failed
     - Implement event emission for context_restored, context_restore_failed
@@ -557,7 +557,7 @@ The system consists of:
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
 
 
-- [ ] 22. Implement error handling and logging
+- [~] 22. Implement error handling and logging
   - [~] 22.1 Create error handling infrastructure
     - Implement error categories (Network, Git, Data, User)
     - Implement error logging to ~/.contextanchor/logs/contextanchor.log
@@ -589,7 +589,7 @@ The system consists of:
     - Test log file creation and rotation
     - _Requirements: 8.1, 8.2, 8.3, 8.5_
 
-- [ ] 23. Implement CLI user experience enhancements
+- [~] 23. Implement CLI user experience enhancements
   - [~] 23.1 Add command validation and help
     - Implement invalid command detection
     - Display usage help for invalid commands
@@ -625,7 +625,7 @@ The system consists of:
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 25. Implement multi-repository support
+- [~] 25. Implement multi-repository support
   - [~] 25.1 Enhance repository identification
     - Implement repository_id generation with remote URL and path hash
     - Ensure unique IDs for same folder name with different remotes
@@ -651,7 +651,7 @@ The system consists of:
     - Test context isolation between repositories
     - _Requirements: 11.1, 11.2, 11.3, 11.6_
 
-- [ ] 26. Implement security and privacy features
+- [~] 26. Implement security and privacy features
   - [~] 26.1 Implement encryption configuration
     - Configure DynamoDB encryption at rest (AES-256)
     - Configure TLS 1.3 for API client
@@ -676,7 +676,7 @@ The system consists of:
     - _Requirements: 9.3, 9.5, 9.6_
 
 
-- [ ] 27. Implement Hypothesis property-based test infrastructure
+- [~] 27. Implement Hypothesis property-based test infrastructure
   - [~] 27.1 Create Hypothesis strategies for domain models
     - Implement context_snapshots strategy with valid field generation
     - Implement action_verbs_text strategy for next steps
@@ -703,7 +703,7 @@ The system consists of:
     - **Property 86: Configuration File Support**
     - **Validates: Requirements 4.4, 6.1, 6.2, 6.3, 6.6, 7.5, 7.6, 12.2, 12.4, 15.1, 16.3**
 
-- [ ] 28. Write integration tests
+- [~] 28. Write integration tests
   - [~] 28.1 Create end-to-end capture flow test
     - Test full flow: init → save-context → verify storage
     - Use temporary git repository
@@ -734,7 +734,7 @@ The system consists of:
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 30. Implement performance optimizations
+- [~] 30. Implement performance optimizations
   - [~] 30.1 Optimize CLI startup time
     - Lazy load heavy dependencies
     - Cache repository detection results
@@ -768,7 +768,7 @@ The system consists of:
     - Note: These are benchmarks, not pass/fail tests
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6_
 
-- [ ] 31. Create deployment and packaging
+- [~] 31. Create deployment and packaging
   - [~] 31.1 Create Python package configuration
     - Configure pyproject.toml with package metadata
     - Define entry points for CLI commands
@@ -792,7 +792,7 @@ The system consists of:
     - _Requirements: 7.1, 14.1, 14.2, 14.3, 14.4_
 
 
-- [ ] 32. Create user documentation
+- [~] 32. Create user documentation
   - [~] 32.1 Create getting started guide
     - Document installation steps
     - Document repository initialization
@@ -814,7 +814,7 @@ The system consists of:
     - Document privacy and security features
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 14.1, 14.2, 14.3, 14.4_
 
-- [ ] 33. Final integration and validation
+- [~] 33. Final integration and validation
   - [~] 33.1 Run complete test suite
     - Run all unit tests with coverage report (target 80%+)
     - Run all property-based tests (100 iterations)

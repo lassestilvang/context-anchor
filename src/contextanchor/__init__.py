@@ -4,6 +4,7 @@ __version__ = "0.1.0"
 
 from .github_integration import GitHubIntegration
 from .git_observer import GitObserver
+from .context_store import ContextStore
 from .models import (
     ContextSnapshot,
     FileChange,
@@ -18,6 +19,7 @@ from .models import (
 __all__ = [
     "GitHubIntegration",
     "GitObserver",
+    "ContextStore",
     "ContextSnapshot",
     "FileChange",
     "CommitInfo",

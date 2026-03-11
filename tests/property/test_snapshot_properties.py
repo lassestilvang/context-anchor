@@ -7,15 +7,15 @@ Uses Hypothesis for comprehensive input coverage.
 
 import pytest
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from hypothesis import given, strategies as st, settings
 from src.contextanchor.models import (
     ContextSnapshot,
     ACTION_VERBS,
 )
 
-
 # Hypothesis strategies for generating valid test data
+
 
 def valid_uuid_string():
     """Generate a valid UUID string."""
@@ -35,7 +35,7 @@ def valid_branch_name(draw):
         st.text(
             min_size=1,
             max_size=100,
-            alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/"
+            alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/",
         )
     )
     # Strip slashes and ensure not empty
@@ -62,11 +62,7 @@ def valid_rationale():
 
 def valid_open_questions():
     """Generate valid open questions list (2-5 items, each max 200 chars)."""
-    return st.lists(
-        st.text(min_size=5, max_size=200),
-        min_size=2,
-        max_size=5
-    )
+    return st.lists(st.text(min_size=5, max_size=200), min_size=2, max_size=5)
 
 
 @st.composite
@@ -82,13 +78,7 @@ def action_verb_step(draw):
 @st.composite
 def valid_next_steps(draw):
     """Generate valid next steps list (1-5 items, each starting with action verb)."""
-    return draw(
-        st.lists(
-            action_verb_step(),
-            min_size=1,
-            max_size=5
-        )
-    )
+    return draw(st.lists(action_verb_step(), min_size=1, max_size=5))
 
 
 @st.composite
@@ -99,10 +89,10 @@ def valid_file_path(draw):
             st.text(
                 min_size=1,
                 max_size=20,
-                alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+                alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_",
             ),
             min_size=1,
-            max_size=5
+            max_size=5,
         )
     )
     extension = draw(st.sampled_from(["py", "js", "ts", "java", "go", "rs", "md", "txt", "json"]))
@@ -128,7 +118,7 @@ def valid_issue_list():
 def valid_context_snapshot(draw):
     """
     Generate a valid ContextSnapshot instance.
-    
+
     This strategy ensures all fields meet the validation requirements:
     - snapshot_id: valid UUID
     - repository_id: 64 hex characters
@@ -147,29 +137,16 @@ def valid_context_snapshot(draw):
     # Generate fields with constraints to ensure total text stays under 2500 chars
     goals = draw(st.text(min_size=10, max_size=200))
     rationale = draw(st.text(min_size=20, max_size=300))
-    open_questions = draw(
-        st.lists(
-            st.text(min_size=5, max_size=150),
-            min_size=2,
-            max_size=4
-        )
-    )
-    next_steps = draw(
-        st.lists(
-            action_verb_step(),
-            min_size=1,
-            max_size=3
-        )
-    )
-    
+    open_questions = draw(st.lists(st.text(min_size=5, max_size=150), min_size=2, max_size=4))
+    next_steps = draw(st.lists(action_verb_step(), min_size=1, max_size=3))
+
     return ContextSnapshot(
         snapshot_id=str(uuid.uuid4()),
         repository_id=draw(valid_repository_id()),
         branch=draw(valid_branch_name()),
-        captured_at=draw(st.datetimes(
-            min_value=datetime(2020, 1, 1),
-            max_value=datetime(2030, 12, 31)
-        )),
+        captured_at=draw(
+            st.datetimes(min_value=datetime(2020, 1, 1), max_value=datetime(2030, 12, 31))
+        ),
         developer_id=draw(valid_developer_id()),
         goals=goals,
         rationale=rationale,
@@ -184,14 +161,15 @@ def valid_context_snapshot(draw):
 
 # Property-based tests
 
+
 @settings(max_examples=100)
 @given(snapshot=valid_context_snapshot())
 def test_property_6_complete_context_snapshot_schema(snapshot):
     """
     Feature: context-anchor, Property 6: Complete Context Snapshot Schema
-    
+
     **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.7**
-    
+
     For any generated Context_Snapshot, it must contain all required fields:
     - snapshot_id (valid UUID)
     - repository_id
@@ -219,7 +197,7 @@ def test_property_6_complete_context_snapshot_schema(snapshot):
     assert snapshot.relevant_files is not None, "relevant_files must be present"
     assert snapshot.related_prs is not None, "related_prs must be present"
     assert snapshot.related_issues is not None, "related_issues must be present"
-    
+
     # Verify field types
     assert isinstance(snapshot.snapshot_id, str), "snapshot_id must be a string"
     assert isinstance(snapshot.repository_id, str), "repository_id must be a string"
@@ -233,49 +211,52 @@ def test_property_6_complete_context_snapshot_schema(snapshot):
     assert isinstance(snapshot.relevant_files, list), "relevant_files must be a list"
     assert isinstance(snapshot.related_prs, list), "related_prs must be a list"
     assert isinstance(snapshot.related_issues, list), "related_issues must be a list"
-    
+
     # Verify snapshot_id is a valid UUID format
     try:
         uuid.UUID(snapshot.snapshot_id)
     except ValueError:
         pytest.fail(f"snapshot_id '{snapshot.snapshot_id}' is not a valid UUID")
-    
+
     # Verify list contents are of correct types
-    assert all(isinstance(q, str) for q in snapshot.open_questions), \
-        "All open_questions items must be strings"
-    assert all(isinstance(s, str) for s in snapshot.next_steps), \
-        "All next_steps items must be strings"
-    assert all(isinstance(f, str) for f in snapshot.relevant_files), \
-        "All relevant_files items must be strings"
-    assert all(isinstance(pr, int) for pr in snapshot.related_prs), \
-        "All related_prs items must be integers"
-    assert all(isinstance(issue, int) for issue in snapshot.related_issues), \
-        "All related_issues items must be integers"
-    
+    assert all(
+        isinstance(q, str) for q in snapshot.open_questions
+    ), "All open_questions items must be strings"
+    assert all(
+        isinstance(s, str) for s in snapshot.next_steps
+    ), "All next_steps items must be strings"
+    assert all(
+        isinstance(f, str) for f in snapshot.relevant_files
+    ), "All relevant_files items must be strings"
+    assert all(
+        isinstance(pr, int) for pr in snapshot.related_prs
+    ), "All related_prs items must be integers"
+    assert all(
+        isinstance(issue, int) for issue in snapshot.related_issues
+    ), "All related_issues items must be integers"
+
     # Verify constraints from requirements
-    assert len(snapshot.repository_id) == 64, \
-        "repository_id must be 64 characters (SHA-256 hash)"
+    assert len(snapshot.repository_id) == 64, "repository_id must be 64 characters (SHA-256 hash)"
     assert len(snapshot.branch) > 0, "branch must not be empty"
     assert len(snapshot.developer_id) > 0, "developer_id must not be empty"
     assert len(snapshot.goals) > 0, "goals must not be empty"
     assert len(snapshot.rationale) > 0, "rationale must not be empty"
-    assert 2 <= len(snapshot.open_questions) <= 5, \
-        "open_questions must have 2-5 items"
-    assert 1 <= len(snapshot.next_steps) <= 5, \
-        "next_steps must have 1-5 items"
-    assert len(snapshot.relevant_files) <= 50, \
-        "relevant_files must have at most 50 items"
-    
+    assert 2 <= len(snapshot.open_questions) <= 5, "open_questions must have 2-5 items"
+    assert 1 <= len(snapshot.next_steps) <= 5, "next_steps must have 1-5 items"
+    assert len(snapshot.relevant_files) <= 50, "relevant_files must have at most 50 items"
+
     # Verify next_steps start with action verbs (validated by __post_init__)
     for step in snapshot.next_steps:
         first_word = step.split()[0].lower()
-        assert first_word in ACTION_VERBS, \
-            f"Next step must start with action verb, got: '{first_word}'"
-    
+        assert (
+            first_word in ACTION_VERBS
+        ), f"Next step must start with action verb, got: '{first_word}'"
+
     # Verify word limit constraint (validated by __post_init__)
     text_content = snapshot.to_text()
-    assert len(text_content) <= 2500, \
-        f"Snapshot text must be under 2500 characters, got {len(text_content)}"
+    assert (
+        len(text_content) <= 2500
+    ), f"Snapshot text must be under 2500 characters, got {len(text_content)}"
 
 
 @settings(max_examples=100)
@@ -294,8 +275,7 @@ def test_property_7_snapshot_word_limit_constraint(snapshot):
 
     # Verify the text content does not exceed 2500 characters (500 words)
     assert len(text_content) <= 2500, (
-        f"Snapshot text must be under 500 words (~2500 chars), "
-        f"got {len(text_content)} chars"
+        f"Snapshot text must be under 500 words (~2500 chars), " f"got {len(text_content)} chars"
     )
 
     # Additional verification: count actual words
@@ -314,7 +294,9 @@ def test_property_7_snapshot_word_limit_constraint(snapshot):
     assert snapshot.goals in text_content, "goals must be included in text content"
     assert snapshot.rationale in text_content, "rationale must be included in text content"
     for question in snapshot.open_questions:
-        assert question in text_content, f"open_question '{question}' must be included in text content"
+        assert (
+            question in text_content
+        ), f"open_question '{question}' must be included in text content"
     for step in snapshot.next_steps:
         assert step in text_content, f"next_step '{step}' must be included in text content"
 
@@ -331,18 +313,18 @@ def test_property_9_next_steps_format_validation(snapshot):
     1 and 5 items, and each item must begin with a recognized action verb.
     """
     # Verify next_steps count is within valid range
-    assert 1 <= len(snapshot.next_steps) <= 5, (
-        f"next_steps must contain 1-5 items, got {len(snapshot.next_steps)}"
-    )
+    assert (
+        1 <= len(snapshot.next_steps) <= 5
+    ), f"next_steps must contain 1-5 items, got {len(snapshot.next_steps)}"
 
     # Verify each next step starts with a recognized action verb
     for step in snapshot.next_steps:
         # Extract the first word from the step
         words = step.split()
         assert len(words) > 0, f"Next step cannot be empty: '{step}'"
-        
+
         first_word = words[0].lower()
-        
+
         # Verify the first word is a recognized action verb
         assert first_word in ACTION_VERBS, (
             f"Next step must start with a recognized action verb. "
@@ -354,4 +336,3 @@ def test_property_9_next_steps_format_validation(snapshot):
     for step in snapshot.next_steps:
         assert isinstance(step, str), f"Next step must be a string, got {type(step)}"
         assert len(step.strip()) > 0, "Next step cannot be empty or whitespace only"
-

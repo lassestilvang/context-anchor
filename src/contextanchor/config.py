@@ -11,7 +11,6 @@ import yaml
 
 from contextanchor.models import Config
 
-
 # Default configuration values
 DEFAULT_CONFIG = {
     "api_endpoint": "https://api.contextanchor.example.com",
@@ -156,8 +155,7 @@ def validate_config(config_dict: Dict[str, Any]) -> List[str]:
             for signal in signals:
                 if not isinstance(signal, str):
                     errors.append(
-                        f"enabled_signals must contain strings, "
-                        f"got {type(signal).__name__}"
+                        f"enabled_signals must contain strings, " f"got {type(signal).__name__}"
                     )
                 elif signal not in valid_signals:
                     errors.append(
@@ -171,8 +169,7 @@ def validate_config(config_dict: Dict[str, Any]) -> List[str]:
             for pattern in patterns:
                 if not isinstance(pattern, str):
                     errors.append(
-                        f"redact_patterns must contain strings, "
-                        f"got {type(pattern).__name__}"
+                        f"redact_patterns must contain strings, " f"got {type(pattern).__name__}"
                     )
 
     return errors

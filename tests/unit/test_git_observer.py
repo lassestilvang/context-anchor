@@ -330,6 +330,8 @@ class TestCurrentBranch:
         # Empty repo might not have an active branch or might return None
         # This is acceptable behavior
         assert branch is None or branch in ["master", "main"]
+
+
 class TestCommitSignalCapture:
     """Tests for commit signal capture."""
 
@@ -677,7 +679,7 @@ class TestChangeStatusDetection:
                 assert status == "added"
                 found = True
                 break
-        
+
         assert found, "file2.txt diff not found"
 
     def test_get_change_status_deleted(self, tmp_path):
@@ -706,7 +708,7 @@ class TestChangeStatusDetection:
                 assert status == "deleted"
                 found = True
                 break
-        
+
         assert found, "test.txt diff not found"
 
 
@@ -754,6 +756,7 @@ class TestHookInstallation:
         hooks_dir = tmp_path / ".git" / "hooks"
         if hooks_dir.exists():
             import shutil
+
             shutil.rmtree(hooks_dir)
 
         observer = GitObserver(str(tmp_path))
@@ -917,6 +920,7 @@ class TestHookInstallationPermissions:
         hooks_dir = tmp_path / ".git" / "hooks"
         if hooks_dir.exists():
             import shutil
+
             shutil.rmtree(hooks_dir)
 
         git_dir = tmp_path / ".git"
@@ -959,7 +963,9 @@ class TestHookInstallationPermissions:
 
             # Should be degraded since post-commit can install but post-checkout cannot
             assert result["status"] in ["degraded", "unavailable"]
-            assert result["post_commit_installed"] is True or result["post_commit_installed"] is False
+            assert (
+                result["post_commit_installed"] is True or result["post_commit_installed"] is False
+            )
         finally:
             # Restore permissions for cleanup
             if post_checkout.exists():
@@ -999,6 +1005,7 @@ class TestGitCommandErrorHandling:
 
         # Corrupt the repository by removing the objects directory
         import shutil
+
         objects_dir = tmp_path / ".git" / "objects"
         shutil.rmtree(objects_dir)
 
@@ -1067,7 +1074,7 @@ class TestGitCommandErrorHandling:
         git.Repo.init(tmp_path)
 
         observer = GitObserver(str(tmp_path))
-        
+
         # Empty repository should still work, just with no changes
         # The implementation already handles this in capture_uncommitted_changes
         # by catching GitCommandError when there's no HEAD
@@ -1207,4 +1214,3 @@ contextanchor _hook-commit &
         observer = GitObserver(str(tmp_path))
         status = observer.get_hook_status()
         assert status == "unavailable"
-

@@ -212,7 +212,7 @@ class GitObserver:
             # Detached HEAD state or other error
             return None
 
-    def capture_commit_signal(self) -> Optional["CommitInfo"]:
+    def capture_commit_signal(self) -> Optional["CommitInfo"]:  # noqa: F821
         """
         Extract signal from most recent commit.
 
@@ -257,9 +257,7 @@ class GitObserver:
         except (ValueError, GitCommandError, AttributeError):
             return None
 
-    def capture_branch_switch(
-        self, from_branch: str, to_branch: str
-    ) -> Optional[dict]:
+    def capture_branch_switch(self, from_branch: str, to_branch: str) -> Optional[dict]:
         """
         Record branch switch event.
 
@@ -411,18 +409,18 @@ class GitObserver:
         # - change_type='D' means file is in HEAD but not in index (deleted)
         # - change_type='A' means file is not in HEAD but in index (added)
         # But GitPython reports them backwards, so we need to invert
-        
-        if diff.renamed_file or (hasattr(diff, 'rename_from') and diff.rename_from):
+
+        if diff.renamed_file or (hasattr(diff, "rename_from") and diff.rename_from):
             return "renamed"
-        elif diff.change_type == 'D':
+        elif diff.change_type == "D":
             # File deleted from HEAD's perspective = added to index
             return "added"
-        elif diff.change_type == 'A':
+        elif diff.change_type == "A":
             # File added from HEAD's perspective = deleted from index
             return "deleted"
-        elif diff.change_type == 'M':
+        elif diff.change_type == "M":
             return "modified"
-        elif diff.change_type == 'R':
+        elif diff.change_type == "R":
             return "renamed"
         else:
             # Fallback logic
@@ -670,4 +668,3 @@ contextanchor _hook-commit &
             return "degraded"
         else:
             return "unavailable"
-
