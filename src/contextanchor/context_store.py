@@ -235,7 +235,7 @@ class ContextStore:
             try:
                 decoded_token = json.loads(base64.b64decode(next_token))
                 query_kwargs["ExclusiveStartKey"] = decoded_token
-            except Exception:
+            except Exception:  # nosec
                 # Invalid token, ignore and start from beginning
                 pass
 
