@@ -2,6 +2,8 @@ import os
 import time
 import requests
 import ssl
+import json
+from datetime import datetime
 from typing import Dict, Any, Optional, cast
 from requests.adapters import HTTPAdapter
 
@@ -25,12 +27,25 @@ class TLSAdapter(HTTPAdapter):
 class APIClient:
     """Client for interacting with the ContextAnchor API."""
 
-    def __init__(self, endpoint: str, retry_attempts: int = 3, timeout: int = 30):
+    def __init__(
+        self,
+        endpoint: str,
+        retry_attempts: int = 3,
+        timeout: int = 30,
+        api_key: Optional[str] = None,
+    ):
+        # Normalize endpoint: ensure it ends with /v1 but avoid duplicate v1 segments
         self.endpoint = endpoint.rstrip("/")
+        if "/v1" not in self.endpoint:
+            self.endpoint += "/v1"
+        elif self.endpoint.endswith("/v1/v1"):
+            self.endpoint = self.endpoint[:-3]
+
         self.retry_attempts = retry_attempts
         self.timeout = timeout
-        self.api_key = self._load_api_key()
+        self.api_key = api_key or self._load_api_key()
         self.session = requests.Session()
+        
         # Enforce TLS 1.2+ for security (TLS 1.3 preferred)
         min_tls = ssl.TLSVersion.TLSv1_2
         if hasattr(ssl, "TLSVersion") and hasattr(ssl.TLSVersion, "TLSv1_3"):
@@ -119,7 +134,15 @@ class APIClient:
             "developer_intent": developer_intent,
             "signals": signals,
         }
-        return self._request("POST", "/v1/contexts", json=payload)
+        
+        # Manually serialize to handle datetime objects
+        def json_serial(obj):
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            raise TypeError(f"Type {type(obj)} not serializable")
+
+        data = json.dumps(payload, default=json_serial)
+        return self._request("POST", "/v1/contexts", data=data, headers={"Content-Type": "application/json"})
 
     def get_latest_context(self, repository_id: str, branch: str) -> Dict[str, Any]:
         """GET /v1/contexts/latest"""
