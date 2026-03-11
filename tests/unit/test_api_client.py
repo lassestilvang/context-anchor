@@ -30,7 +30,7 @@ def test_create_context_success(api_client):
         args, kwargs = mock_request.call_args
         assert args == ("POST", "http://api.example.com/v1/contexts")
         assert kwargs["headers"]["Authorization"] == "Bearer dummy-key"
-        
+
         # Handle both json (requests default) and data (manual serialize)
         payload = kwargs.get("json") or json.loads(kwargs.get("data"))
         assert payload["repository_id"] == "repo1"
