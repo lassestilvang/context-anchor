@@ -38,22 +38,31 @@ class APIClient:
                 return cast(Dict[str, Any], response.json())
             except requests.exceptions.Timeout:
                 if attempt == self.retry_attempts:
-                    raise ConnectionError(f"Request timed out after {self.timeout}s")
+                    from .errors import NetworkError
+                    raise NetworkError(f"Request timed out after {self.timeout}s")
             except requests.exceptions.ConnectionError:
                 if attempt == self.retry_attempts:
-                    raise ConnectionError("Network is unavailable or server is unreachable")
+                    from .errors import NetworkError
+                    raise NetworkError("Network is unavailable or server is unreachable")
             except requests.exceptions.HTTPError as e:
                 # Only retry 5xx errors
                 if 500 <= e.response.status_code < 600 and attempt < self.retry_attempts:
                     pass
                 else:
-                    raise ValueError(f"API Error {e.response.status_code}: {e.response.text}")
+                    from .errors import NetworkError, ConfigurationError, DataError
+                    if e.response.status_code == 401 or e.response.status_code == 403:
+                        raise ConfigurationError("Invalid or missing API key")
+                    elif 400 <= e.response.status_code < 500:
+                        raise DataError(f"Invalid request ({e.response.status_code}): {e.response.text}")
+                    else:
+                        raise NetworkError(f"API Error {e.response.status_code}: {e.response.text}")
 
             if attempt < self.retry_attempts:
                 # Exponential backoff (1s, 2s, 4s...)
                 time.sleep(2**attempt)
 
-        raise ConnectionError("Max retries exceeded")
+        from .errors import NetworkError
+        raise NetworkError("Max retries exceeded")
 
     def create_context(
         self,

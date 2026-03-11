@@ -519,8 +519,8 @@ The system consists of:
     - Test performance with large snapshot counts
     - _Requirements: 5.5, 5.6, 5.7, 13.6_
 
-- [~] 21. Implement metrics and instrumentation
-  - [~] 21.1 Create MetricsCollector class
+- [x] 21. Implement metrics and instrumentation
+  - [x] 21.1 Create MetricsCollector class
     - Implement event emission for context_capture_started, context_capture_completed, context_capture_failed
     - Implement event emission for context_restored, context_restore_failed
     - Implement event emission for resume_session_started
@@ -528,51 +528,52 @@ The system consists of:
     - Store events in local SQLite database
     - _Requirements: 16.1, 16.2, 16.3_
 
-  - [~] 21.2 Implement time-to-productivity calculation
+  - [x] 21.2 Implement time-to-productivity calculation
     - Implement calculate_time_to_productivity method
     - Track resume_session_started events
     - Track first_productive_action events (commit, staged change)
     - Calculate duration between events
     - _Requirements: 16.4_
 
-  - [~] 21.3 Create metrics export command
+  - [x] 21.3 Create metrics export command
     - Implement export-metrics command
     - Support JSON and CSV output formats
     - Include timestamps for all events
     - Calculate and include time-to-productivity metrics
     - _Requirements: 16.5_
 
-  - [~] 21.4 Write property tests for metrics
+  - [x] 21.4 Write property tests for metrics
     - **Property 50: Event Emission for Operations**
     - **Property 51: Resume Session Event**
     - **Property 53: Time to Productivity Calculation**
     - **Property 87: Metrics Export Formats**
     - **Validates: Requirements 16.1, 16.2, 16.4, 16.5**
 
-  - [~] 21.5 Write unit tests for metrics
+  - [x] 21.5 Write unit tests for metrics
     - Test event emission
     - Test time-to-productivity calculation
+```
     - Test export in JSON format
     - Test export in CSV format
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
 
 
-- [~] 22. Implement error handling and logging
-  - [~] 22.1 Create error handling infrastructure
+- [x] 22. Implement error handling and logging
+  - [x] 22.1 Create error handling infrastructure
     - Implement error categories (Network, Git, Data, User)
     - Implement error logging to ~/.contextanchor/logs/contextanchor.log
     - Implement log rotation (10MB max, keep 5 files)
     - Add timestamps and context to all log entries
     - _Requirements: 8.5_
 
-  - [~] 22.2 Implement graceful degradation
+  - [x] 22.2 Implement graceful degradation
     - Handle Context_Store unavailable (cache locally)
     - Handle Agent_Core unavailable (store raw signals)
     - Handle GitHub API unavailable (continue without metadata)
     - Handle git command failures (log and continue)
     - _Requirements: 8.1, 8.2, 8.3, 10.5_
 
-  - [~] 22.3 Write property tests for error handling
+  - [x] 22.3 Write property tests for error handling
     - **Property 24: Offline Context Caching**
     - **Property 25: Graceful Agent Core Degradation**
     - **Property 26: Git Operation Error Resilience**
@@ -582,36 +583,37 @@ The system consists of:
     - **Property 37: GitHub Rate Limit Resilience**
     - **Validates: Requirements 8.1, 8.2, 8.3, 8.4, 8.5, 8.8, 10.5**
 
-  - [~] 22.4 Write unit tests for error scenarios
+  - [x] 22.4 Write unit tests for error scenarios
     - Test network unavailable scenarios
     - Test git command failures
     - Test invalid data handling
     - Test log file creation and rotation
     - _Requirements: 8.1, 8.2, 8.3, 8.5_
 
-- [~] 23. Implement CLI user experience enhancements
-  - [~] 23.1 Add command validation and help
+- [x] 23. Implement CLI user experience enhancements
+  - [x] 23.1 Add command validation and help
     - Implement invalid command detection
     - Display usage help for invalid commands
     - Add --help flag to all commands
     - _Requirements: 6.4_
 
-  - [~] 23.2 Add status indicators for long operations
+  - [x] 23.2 Add status indicators for long operations
     - Implement spinner for operations > 1 second
     - Update status every 2 seconds
     - Show progress for API calls
     - _Requirements: 13.5_
 
-  - [~] 23.3 Implement repository detection from subdirectories
+  - [x] 23.3 Implement repository detection from subdirectories
     - Detect repository root from any subdirectory
     - Display error when executed outside repository
     - _Requirements: 6.5, 11.5_
 
-  - [~] 23.4 Write property tests for CLI behavior
+  - [x] 23.4 Write property tests for CLI behavior
     - **Property 18: Invalid Command Help Display**
     - **Property 19: Repository-Relative Command Execution**
     - **Property 45: Long Operation Status Updates**
     - **Property 72: Outside-Repository Execution Guard**
+    - **Validates: Requirements 6.4, 6.5, 13.5, 11.5**
     - **Validates: Requirements 6.4, 6.5, 11.5, 13.5**
 
   - [~] 23.5 Write unit tests for CLI UX

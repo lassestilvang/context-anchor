@@ -668,3 +668,49 @@ contextanchor _hook-commit &
             return "degraded"
         else:
             return "unavailable"
+    def has_productive_action_since(self, since_timestamp: datetime) -> bool:
+        """
+        Check if any productive action (staged changes or new commits) 
+        has occurred since the given timestamp.
+        
+        Args:
+            since_timestamp: The starting timestamp (UTC)
+            
+        Returns:
+            True if staged changes or new commits exist, False otherwise
+        """
+        if self._repo is None:
+            if self.detect_repository_root() is None:
+                return False
+        
+        # Check for staged changes
+        try:
+            if len(self._repo.index.diff("HEAD")) > 0:
+                return True
+        except (GitCommandError, Exception):
+            # Might be empty repo or detached head
+            pass
+            
+        # Check for new commits
+        try:
+            # Iter commits on current branch
+            # Limit to last 10 should be enough for a quick check
+            for commit in self._repo.iter_commits(max_count=10):
+                # commit.committed_datetime is offset-aware
+                # Convert since_timestamp to be offset-aware if it's naive (assuming UTC)
+                from datetime import timezone
+                if since_timestamp.tzinfo is None:
+                    since_ts = since_timestamp.replace(tzinfo=timezone.utc)
+                else:
+                    since_ts = since_timestamp
+                
+                if commit.committed_datetime > since_ts:
+                    return True
+                else:
+                    # Since iter_commits is in reverse chronological order, 
+                    # we can stop once we hit a commit older than the timestamp
+                    break
+        except (GitCommandError, Exception):
+            pass
+            
+        return False
