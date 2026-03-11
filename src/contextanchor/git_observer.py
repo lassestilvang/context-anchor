@@ -186,7 +186,7 @@ class GitObserver:
                 # Reconstruct with https scheme for consistency
                 path = parsed.path.rstrip("/")
                 return f"https://{parsed.netloc}{path}"
-        except Exception:
+        except Exception:  # nosec
             pass
 
         # Return as-is if we can't parse it
@@ -564,7 +564,7 @@ fi
                 f.write(hook_content)
 
             # Make executable
-            os.chmod(hook_path, 0o755)
+            os.chmod(hook_path, 0o755)  # nosec
 
             return True
         except (OSError, PermissionError):
@@ -613,7 +613,7 @@ contextanchor _hook-commit &
                 f.write(hook_content)
 
             # Make executable
-            os.chmod(hook_path, 0o755)
+            os.chmod(hook_path, 0o755)  # nosec
 
             return True
         except (OSError, PermissionError):
