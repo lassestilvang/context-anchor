@@ -10,7 +10,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.theme import Theme
 from pathlib import Path
-from typing import Optional, Any, Collection
+from typing import Optional, Any
 
 # Initialize Rich console with custom theme
 custom_theme = Theme(
