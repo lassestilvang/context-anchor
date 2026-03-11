@@ -552,7 +552,6 @@ The system consists of:
   - [x] 21.5 Write unit tests for metrics
     - Test event emission
     - Test time-to-productivity calculation
-```
     - Test export in JSON format
     - Test export in CSV format
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
@@ -654,30 +653,29 @@ The system consists of:
     - Test context isolation between repositories
     - _Requirements: 11.1, 11.2, 11.3, 11.6_
 
-- [~] 26. Implement security and privacy features
-  - [~] 26.1 Implement encryption configuration
+- [x] 26. Implement security and privacy features
+  - [x] 26.1 Implement encryption configuration
     - Configure DynamoDB encryption at rest (AES-256)
     - Configure TLS 1.3 for API client
     - Validate certificate chains
     - _Requirements: 9.1, 9.2_
 
-  - [~] 26.2 Implement developer-scoped access
+  - [x] 26.2 Implement developer-scoped access
     - Store developer_id with each snapshot
     - Filter queries by developer_id
     - Implement API key management
     - _Requirements: 9.3_
 
-  - [~] 26.3 Write property tests for security
+  - [x] 26.3 Write property tests for security
     - **Property 68: Encryption at Rest Enforcement**
     - **Property 69: Encryption in Transit Enforcement**
     - **Validates: Requirements 9.1, 9.2**
 
-  - [~] 26.4 Write unit tests for privacy features
+  - [x] 26.4 Write unit tests for privacy features
     - Test source code exclusion from transmitted data
     - Test secret redaction
     - Test developer-scoped queries
     - _Requirements: 9.3, 9.5, 9.6_
-
 
 - [~] 27. Implement Hypothesis property-based test infrastructure
   - [~] 27.1 Create Hypothesis strategies for domain models

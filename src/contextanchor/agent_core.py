@@ -8,12 +8,14 @@ import boto3  # type: ignore
 from datetime import datetime
 
 from .models import ContextSnapshot, CaptureSignals, generate_snapshot_id
+from .privacy import PrivacyFilter
 
 
 class AgentCore:
     def __init__(self, bedrock_client: Any = None) -> None:
         self.bedrock = bedrock_client or boto3.client("bedrock-runtime")
         self.model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+        self.privacy_filter = PrivacyFilter()
 
     def synthesize_context(
         self,
@@ -38,10 +40,14 @@ class AgentCore:
                 branch=branch,
                 captured_at=datetime.utcnow(),
                 developer_id=developer_id,
-                goals=parsed_data.get("goals", ""),
-                rationale=parsed_data.get("rationale", ""),
-                open_questions=parsed_data.get("open_questions", []),
-                next_steps=parsed_data.get("next_steps", []),
+                goals=self.privacy_filter.apply(parsed_data.get("goals", "")),
+                rationale=self.privacy_filter.apply(parsed_data.get("rationale", "")),
+                open_questions=[
+                    self.privacy_filter.apply(q) for q in parsed_data.get("open_questions", [])
+                ],
+                next_steps=[
+                    self.privacy_filter.apply(s) for s in parsed_data.get("next_steps", [])
+                ],
                 relevant_files=self._extract_relevant_files(signals),
                 related_prs=signals.pr_references,
                 related_issues=signals.issue_references,
@@ -77,7 +83,7 @@ CRITICAL CONSTRAINTS:
             ],
         }
 
-        user_message = f"Developer Intent:\n{intent}\n\nGit Signals:\n{json.dumps(signals_dict, indent=2)}\n\nSynthesize the context into the requested JSON format."
+        user_message = f"Developer Intent:\n{self.privacy_filter.apply(intent)}\n\nGit Signals:\n{json.dumps(signals_dict, indent=2)}\n\nSynthesize the context into the requested JSON format."
 
         return json.dumps(
             {

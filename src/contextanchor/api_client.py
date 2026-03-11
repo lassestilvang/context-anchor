@@ -1,7 +1,26 @@
 import os
 import time
 import requests
+import ssl
 from typing import Dict, Any, Optional, cast
+from requests.adapters import HTTPAdapter
+from urllib3.poolmanager import PoolManager
+
+
+class TLSAdapter(HTTPAdapter):
+    """
+    HTTP adapter that enforces a minimum TLS version.
+    """
+
+    def __init__(self, min_tls_version: int = ssl.TLSVersion.TLSv1_2, **kwargs: Any):
+        self.min_tls_version = min_tls_version
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, *args: Any, **kwargs: Any) -> Any:
+        context = ssl.create_default_context()
+        context.minimum_version = self.min_tls_version
+        kwargs["ssl_context"] = context
+        return super().init_poolmanager(*args, **kwargs)
 
 
 class APIClient:
@@ -12,6 +31,9 @@ class APIClient:
         self.retry_attempts = retry_attempts
         self.timeout = timeout
         self.api_key = self._load_api_key()
+        self.session = requests.Session()
+        # Enforce TLS 1.2+ for security (TLS 1.3 preferred)
+        self.session.mount("https://", TLSAdapter(min_tls_version=ssl.TLSVersion.TLSv1_2))
 
     def _load_api_key(self) -> str:
         """Load API key from credentials file."""
@@ -31,7 +53,7 @@ class APIClient:
 
         for attempt in range(self.retry_attempts + 1):
             try:
-                response = requests.request(
+                response = self.session.request(
                     method, url, headers=headers, timeout=self.timeout, **kwargs
                 )
                 response.raise_for_status()

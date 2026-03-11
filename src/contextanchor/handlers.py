@@ -125,13 +125,16 @@ def get_latest_context_handler(event: Dict[str, Any], context: Any) -> Dict[str,
         qsp = event.get("queryStringParameters") or {}
         repository_id = qsp.get("repository_id")
         branch = qsp.get("branch")
+        developer_id = qsp.get("developer_id")
 
         if not repository_id or not branch:
             return _build_response(
                 400, {"error": "Missing required query parameters: repository_id, branch"}
             )
 
-        snapshot = get_context_store().get_latest_snapshot(repository_id, branch)
+        snapshot = get_context_store().get_latest_snapshot(
+            repository_id, branch, developer_id=developer_id
+        )
         if not snapshot:
             return _build_response(404, {"error": "Snapshot not found"})
 
@@ -178,11 +181,16 @@ def list_contexts_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]
             )
 
         branch = qsp.get("branch")
+        developer_id = qsp.get("developer_id")
         limit = int(qsp.get("limit", 20))
         next_token = qsp.get("next_token")
 
         result = get_context_store().list_snapshots(
-            repository_id=repository_id, branch=branch, limit=limit, next_token=next_token
+            repository_id=repository_id,
+            branch=branch,
+            developer_id=developer_id,
+            limit=limit,
+            next_token=next_token,
         )
 
         return _build_response(

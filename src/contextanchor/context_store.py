@@ -135,7 +135,9 @@ class ContextStore:
 
         return self._item_to_snapshot(items[0])
 
-    def get_latest_snapshot(self, repository_id: str, branch: str) -> Optional[ContextSnapshot]:
+    def get_latest_snapshot(
+        self, repository_id: str, branch: str, developer_id: Optional[str] = None
+    ) -> Optional[ContextSnapshot]:
         """
         Retrieve the most recent snapshot for a repository and branch.
 
@@ -151,6 +153,14 @@ class ContextStore:
 
         Requirements: 4.2, 4.3
         """
+        # Build filter expression
+        filter_expr = "attribute_not_exists(is_deleted) OR is_deleted = :false"
+        attr_values = {":false": False}
+        
+        if developer_id:
+            filter_expr = f"({filter_expr}) AND developer_id = :dev_id"
+            attr_values[":dev_id"] = developer_id
+
         response = self.table.query(
             KeyConditionExpression=(
                 Key("PK").eq(f"REPO#{repository_id}")
@@ -158,10 +168,9 @@ class ContextStore:
             ),
             ScanIndexForward=False,  # Descending order (newest first)
             Limit=1,
-            FilterExpression="attribute_not_exists(is_deleted) OR is_deleted = :false",
-            ExpressionAttributeValues={":false": False},
+            FilterExpression=filter_expr,
+            ExpressionAttributeValues=attr_values,
         )
-
         items = response.get("Items", [])
         if not items:
             return None
@@ -172,15 +181,17 @@ class ContextStore:
         self,
         repository_id: str,
         branch: Optional[str] = None,
+        developer_id: Optional[str] = None,
         limit: int = 20,
         next_token: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        List snapshots for a repository with optional branch filter and pagination.
+        List snapshots for a repository with optional branch/developer filter and pagination.
 
         Args:
             repository_id: Repository identifier
             branch: Optional branch name filter
+            developer_id: Optional developer ID filter
             limit: Maximum number of results (default 20, max 100)
             next_token: Pagination token from previous response
 
@@ -196,11 +207,19 @@ class ContextStore:
         limit = min(limit, 100)
 
         # Build query parameters
+        # Build filter expression
+        filter_expr = "attribute_not_exists(is_deleted) OR is_deleted = :false"
+        attr_values = {":false": False}
+
+        if developer_id:
+            filter_expr = f"({filter_expr}) AND developer_id = :dev_id"
+            attr_values[":dev_id"] = developer_id
+
         query_kwargs = {
             "ScanIndexForward": False,  # Descending order (newest first)
             "Limit": limit,
-            "FilterExpression": "attribute_not_exists(is_deleted) OR is_deleted = :false",
-            "ExpressionAttributeValues": {":false": False},
+            "FilterExpression": filter_expr,
+            "ExpressionAttributeValues": attr_values,
         }
 
         # Build key condition based on branch filter
