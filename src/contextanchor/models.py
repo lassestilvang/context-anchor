@@ -51,6 +51,7 @@ class ContextSnapshot:
     relevant_files: List[str]  # File paths from git signals
     related_prs: List[int]  # PR numbers
     related_issues: List[int]  # Issue numbers
+    github_metadata: Optional["GitHubRepo"] = None  # GitHub repository metadata
     deleted_at: Optional[datetime] = None  # Soft delete timestamp
 
     def __post_init__(self) -> None:

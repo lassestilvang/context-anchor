@@ -89,6 +89,7 @@ class ContextStore:
             "relevant_files": snapshot.relevant_files,
             "related_prs": snapshot.related_prs,
             "related_issues": snapshot.related_issues,
+            "github_metadata": dataclasses.asdict(snapshot.github_metadata) if snapshot.github_metadata else None,
             # Deletion tracking
             "is_deleted": False,
             # TTL for automatic cleanup
@@ -382,5 +383,13 @@ class ContextStore:
             relevant_files=item.get("relevant_files", []),
             related_prs=item.get("related_prs", []),
             related_issues=item.get("related_issues", []),
+            github_metadata=self._dict_to_gh_repo(item.get("github_metadata")),
             deleted_at=deleted_at,
         )
+
+    def _dict_to_gh_repo(self, data: Optional[Dict[str, Any]]) -> Any:
+        """Convert dict back to GitHubRepo dataclass."""
+        if not data:
+            return None
+        from .models import GitHubRepo
+        return GitHubRepo(**data)

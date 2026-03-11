@@ -51,6 +51,7 @@ class AgentCore:
                 relevant_files=self._extract_relevant_files(signals),
                 related_prs=signals.pr_references,
                 related_issues=signals.issue_references,
+                github_metadata=signals.github_metadata,
             )
 
             # ContextSnapshot's __post_init__ will validate the schema compliance here

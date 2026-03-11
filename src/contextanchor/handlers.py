@@ -177,12 +177,12 @@ def get_latest_context_handler(event: Dict[str, Any], context: Any) -> Dict[str,
             repository_id, branch, developer_id=developer_id
         )
         if not snapshot:
-            return _build_response(404, {"error": "Snapshot not found"})
+            return _build_response(404, {"error": "Snapshot not found", "code": "NOT_FOUND"})
 
         return _build_response(200, _snapshot_to_dict(snapshot))
     except Exception as e:
         logger.error(f"Error getting latest context: {str(e)}")
-        return _build_response(500, {"error": "Internal Server Error"})
+        return _build_response(500, {"error": "Internal Server Error", "code": "INTERNAL_ERROR"})
 
 
 def get_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -199,12 +199,18 @@ def get_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         snapshot = get_context_store().get_snapshot_by_id(snapshot_id)
         if not snapshot:
-            return _build_response(404, {"error": "Snapshot not found"})
+            return _build_response(404, {"error": "Snapshot not found", "code": "NOT_FOUND"})
+
+        # Optional scoping: if developer_id provided, verify it matches
+        qsp = event.get("queryStringParameters") or {}
+        dev_id = qsp.get("developer_id")
+        if dev_id and snapshot.developer_id != dev_id:
+            return _build_response(403, {"error": "Access denied to this snapshot", "code": "FORBIDDEN"})
 
         return _build_response(200, _snapshot_to_dict(snapshot))
     except Exception as e:
         logger.error(f"Error getting context: {str(e)}")
-        return _build_response(500, {"error": "Internal Server Error"})
+        return _build_response(500, {"error": "Internal Server Error", "code": "INTERNAL_ERROR"})
 
 
 def list_contexts_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -261,9 +267,17 @@ def delete_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any
         if not snapshot_id:
             return _build_response(400, {"error": "Missing snapshot_id"})
 
+        # Optional scoping: if developer_id provided, verify it matches before deleting
+        qsp = event.get("queryStringParameters") or {}
+        dev_id = qsp.get("developer_id")
+        snapshot = get_context_store().get_snapshot_by_id(snapshot_id)
+        
+        if snapshot and dev_id and snapshot.developer_id != dev_id:
+            return _build_response(403, {"error": "Access denied to delete this snapshot", "code": "FORBIDDEN"})
+
         result = get_context_store().soft_delete_snapshot(snapshot_id)
         if not result["deleted"]:
-            return _build_response(404, {"error": "Snapshot not found"})
+            return _build_response(404, {"error": "Snapshot not found", "code": "NOT_FOUND"})
 
         return _build_response(
             200,
@@ -271,7 +285,10 @@ def delete_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any
         )
     except Exception as e:
         logger.error(f"Error deleting context: {str(e)}")
-        return _build_response(500, {"error": "Internal Server Error"})
+        return _build_response(500, {"error": "Internal Server Error", "code": "INTERNAL_ERROR"})
+
+
+        return _build_response(503, {"status": "unhealthy", "error": "DynamoDB connection failed"})
 
 
 def health_check_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -288,6 +305,20 @@ def health_check_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
         return _build_response(503, {"status": "unhealthy", "error": "DynamoDB connection failed"})
+
+
+def purge_snapshots_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """
+    Triggered by CloudWatch Events (EventBridge).
+    Permanently purges snapshots past their 7-day deletion deadline.
+    """
+    try:
+        count = get_context_store().purge_deleted_snapshots()
+        logger.info(f"Purged {count} snapshots.")
+        return _build_response(200, {"purged_count": count})
+    except Exception as e:
+        logger.error(f"Error during purge: {str(e)}")
+        return _build_response(500, {"error": "Internal Server Error", "code": "INTERNAL_ERROR"})
 
 
 def _build_response(status_code: int, body: Dict[str, Any]) -> Dict[str, Any]:
@@ -313,6 +344,11 @@ def _snapshot_to_dict(snapshot: Any) -> Dict[str, Any]:
         "relevant_files": snapshot.relevant_files,
         "related_prs": snapshot.related_prs,
         "related_issues": snapshot.related_issues,
+        "signals": {
+            "pr_references": snapshot.related_prs,
+            "issue_references": snapshot.related_issues,
+            "github_metadata": dataclasses.asdict(snapshot.github_metadata) if hasattr(snapshot, "github_metadata") and snapshot.github_metadata else None
+        }
     }
     if snapshot.deleted_at:
         d["deleted_at"] = snapshot.deleted_at.isoformat()
