@@ -49,13 +49,13 @@ def _parse_signals(signals_data: Dict[str, Any]) -> CaptureSignals:
     commits = []
     # Simplified commit parsing for now
     for c in signals_data.get("recent_commits", []):
-        from datetime import datetime
+        from datetime import datetime, UTC
 
         commits.append(
             CommitInfo(
                 hash=c.get("hash", ""),
                 message=c.get("message", ""),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 files_changed=c.get("files_changed", []),
             )
         )
@@ -98,7 +98,7 @@ def capture_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, An
         # Check if we are already in the async worker
         if not event.get("is_async_worker"):
             import boto3
-            from datetime import datetime
+            from datetime import datetime, UTC
             from .models import generate_snapshot_id
 
             snapshot_id = generate_snapshot_id()
@@ -119,7 +119,7 @@ def capture_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, An
                         201,
                         {
                             "snapshot_id": snapshot_id,
-                            "captured_at": datetime.utcnow().isoformat(),
+                            "captured_at": datetime.now(UTC).isoformat(),
                             "status": "processing",
                         },
                     )

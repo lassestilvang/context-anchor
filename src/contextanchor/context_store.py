@@ -9,7 +9,7 @@ Requirements: 4.1, 4.2, 4.3, 12.6
 
 import os
 import dataclasses
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, Any, Optional
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -294,7 +294,7 @@ class ContextStore:
         item = items[0]
 
         # Calculate purge deadline (7 days from now)
-        deleted_at = datetime.utcnow()
+        deleted_at = datetime.now(UTC)
         purge_timestamp = deleted_at.timestamp() + (7 * 24 * 60 * 60)
         purge_after_delete_at = int(purge_timestamp)
 
@@ -328,7 +328,7 @@ class ContextStore:
 
         Requirements: 4.6, 9.4
         """
-        current_timestamp = int(datetime.utcnow().timestamp())
+        current_timestamp = int(datetime.now(UTC).timestamp())
         purged_count = 0
 
         # Scan for items with purge_after_delete_at < now

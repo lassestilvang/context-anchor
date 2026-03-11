@@ -5,7 +5,7 @@ Tests queue storage, retrieval, operation expiration, and cache functionality.
 Validates Requirements 8.1, 8.4, 8.8.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 import tempfile
 import shutil
@@ -99,17 +99,20 @@ class TestLocalStorage:
         )
 
         # Manually set expiration to past
-        with sqlite3.connect(self.storage.db_path) as conn:
-            past_time = datetime.now() - timedelta(hours=25)
-            conn.execute(
-                """
-                UPDATE offline_queue
-                SET expires_at = ?
-                WHERE operation_id = ?
-            """,
-                (past_time.isoformat(), op_id),
-            )
-            conn.commit()
+        conn = sqlite3.connect(self.storage.db_path)
+        try:
+            with conn:
+                past_time = datetime.now(UTC) - timedelta(hours=25)
+                conn.execute(
+                    """
+                    UPDATE offline_queue
+                    SET expires_at = ?
+                    WHERE operation_id = ?
+                """,
+                    (past_time.isoformat(), op_id),
+                )
+        finally:
+            conn.close()
 
         # Verify operation is expired
         expired = self.storage.get_expired_operations()
@@ -135,9 +138,8 @@ class TestLocalStorage:
         assert operation.next_retry_at is None
 
         # First retry: 2^1 = 2 seconds
-        before = datetime.now()
+        before = datetime.now(UTC)
         self.storage.retry_operation(operation)
-        datetime.now()
 
         assert operation.retry_count == 1
         assert operation.next_retry_at is not None
@@ -146,7 +148,7 @@ class TestLocalStorage:
         assert expected_delay - 1 <= actual_delay <= expected_delay + 2
 
         # Second retry: 2^2 = 4 seconds
-        before = datetime.now()
+        before = datetime.now(UTC)
         self.storage.retry_operation(operation)
 
         assert operation.retry_count == 2
@@ -168,7 +170,7 @@ class TestLocalStorage:
             self.storage.retry_operation(operation)
 
         # Verify backoff is capped at 3600 seconds
-        before = datetime.now()
+        before = datetime.now(UTC)
         actual_delay = (operation.next_retry_at - before).total_seconds()
         assert actual_delay <= 3600
 
@@ -179,17 +181,20 @@ class TestLocalStorage:
         )
 
         # Set next_retry_at to future
-        with sqlite3.connect(self.storage.db_path) as conn:
-            future_time = datetime.now() + timedelta(hours=1)
-            conn.execute(
-                """
-                UPDATE offline_queue
-                SET next_retry_at = ?
-                WHERE operation_id = ?
-            """,
-                (future_time.isoformat(), op_id),
-            )
-            conn.commit()
+        conn = sqlite3.connect(self.storage.db_path)
+        try:
+            with conn:
+                future_time = datetime.now(UTC) + timedelta(hours=1)
+                conn.execute(
+                    """
+                    UPDATE offline_queue
+                    SET next_retry_at = ?
+                    WHERE operation_id = ?
+                """,
+                    (future_time.isoformat(), op_id),
+                )
+        finally:
+            conn.close()
 
         # Verify operation is not in pending list
         pending = self.storage.get_pending_operations()
@@ -224,17 +229,20 @@ class TestLocalStorage:
             op_ids.append(op_id)
 
         # Expire first two operations
-        with sqlite3.connect(self.storage.db_path) as conn:
-            past_time = datetime.now() - timedelta(hours=25)
-            conn.execute(
-                """
-                UPDATE offline_queue
-                SET expires_at = ?
-                WHERE operation_id IN (?, ?)
-            """,
-                (past_time.isoformat(), op_ids[0], op_ids[1]),
-            )
-            conn.commit()
+        conn = sqlite3.connect(self.storage.db_path)
+        try:
+            with conn:
+                past_time = datetime.now(UTC) - timedelta(hours=25)
+                conn.execute(
+                    """
+                    UPDATE offline_queue
+                    SET expires_at = ?
+                    WHERE operation_id IN (?, ?)
+                """,
+                    (past_time.isoformat(), op_ids[0], op_ids[1]),
+                )
+        finally:
+            conn.close()
 
         # Cleanup expired operations
         removed_count = self.storage.cleanup_expired_operations()
@@ -266,7 +274,7 @@ class TestSnapshotCache:
             snapshot_id=generate_snapshot_id(),
             repository_id="test_repo",
             branch="main",
-            captured_at=datetime.now(),
+            captured_at=datetime.now(UTC),
             developer_id="dev123",
             goals="Test caching",
             rationale="Verify offline cache works",
@@ -309,7 +317,7 @@ class TestSnapshotCache:
                 snapshot_id=generate_snapshot_id(),
                 repository_id="test_repo",
                 branch="main",
-                captured_at=datetime.now() + timedelta(minutes=i),
+                captured_at=datetime.now(UTC) + timedelta(minutes=i),
                 developer_id="dev123",
                 goals=f"Goal {i}",
                 rationale=f"Rationale {i}",
@@ -334,7 +342,7 @@ class TestSnapshotCache:
             snapshot_id=generate_snapshot_id(),
             repository_id="test_repo",
             branch="main",
-            captured_at=datetime.now(),
+            captured_at=datetime.now(UTC),
             developer_id="dev123",
             goals="Main branch work",
             rationale="Testing main",
@@ -349,7 +357,7 @@ class TestSnapshotCache:
             snapshot_id=generate_snapshot_id(),
             repository_id="test_repo",
             branch="feature/test",
-            captured_at=datetime.now(),
+            captured_at=datetime.now(UTC),
             developer_id="dev123",
             goals="Feature branch work",
             rationale="Testing feature",
@@ -379,7 +387,7 @@ class TestSnapshotCache:
             snapshot_id=generate_snapshot_id(),
             repository_id="test_repo",
             branch="main",
-            captured_at=datetime.now(),
+            captured_at=datetime.now(UTC),
             developer_id="dev123",
             goals="Deleted snapshot",
             rationale="Testing soft delete",
@@ -388,7 +396,7 @@ class TestSnapshotCache:
             relevant_files=["deleted.py"],
             related_prs=[],
             related_issues=[],
-            deleted_at=datetime.now(),
+            deleted_at=datetime.now(UTC),
         )
 
         self.storage.cache_snapshot(snapshot)

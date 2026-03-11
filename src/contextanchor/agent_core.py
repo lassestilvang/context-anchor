@@ -5,7 +5,7 @@ Agent Core component for interacting with AWS Bedrock to synthesize contexts.
 import json
 from typing import Dict, Any, List, cast
 import boto3
-from datetime import datetime
+from datetime import datetime, UTC
 
 from .models import ContextSnapshot, CaptureSignals, generate_snapshot_id
 from .privacy import PrivacyFilter
@@ -38,7 +38,7 @@ class AgentCore:
                 snapshot_id=generate_snapshot_id(),
                 repository_id=repository_id,
                 branch=branch,
-                captured_at=datetime.utcnow(),
+                captured_at=datetime.now(UTC),
                 developer_id=developer_id,
                 goals=self.privacy_filter.apply(parsed_data.get("goals", "")),
                 rationale=self.privacy_filter.apply(parsed_data.get("rationale", "")),

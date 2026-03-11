@@ -9,9 +9,10 @@ This module provides persistent local storage for:
 
 import sqlite3
 import json
-from datetime import datetime, timedelta
+import contextlib
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Generator
 from contextanchor.models import QueuedOperation, ContextSnapshot, generate_operation_id
 
 
@@ -40,10 +41,18 @@ class LocalStorage:
 
         self._init_database()
 
-    def _init_database(self) -> None:
-        """Initialize database schema."""
+    @contextlib.contextmanager
+    def _connection(self) -> Generator[sqlite3.Connection, None, None]:
+        """Context manager for SQLite connections to ensure they are closed."""
         conn = sqlite3.connect(self.db_path)
         try:
+            yield conn
+        finally:
+            conn.close()
+
+    def _init_database(self) -> None:
+        """Initialize database schema."""
+        with self._connection() as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS repositories (
                     repository_id TEXT PRIMARY KEY,
@@ -108,8 +117,6 @@ class LocalStorage:
             """)
 
             conn.commit()
-        finally:
-            conn.close()
 
     def register_repository(
         self, repo_id: str, name: str, root_path: str, remote_url: Optional[str] = None
@@ -123,8 +130,8 @@ class LocalStorage:
             root_path: Absolute path to repo root
             remote_url: Git remote URL
         """
-        now = datetime.now().isoformat()
-        with sqlite3.connect(self.db_path) as conn:
+        now = datetime.now(UTC).isoformat()
+        with self._connection() as conn:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO repositories (
@@ -145,7 +152,7 @@ class LocalStorage:
         Returns:
             Dictionary with repo metadata or None
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 "SELECT repository_id, name, root_path, remote_url, last_accessed_at FROM repositories WHERE repository_id = ?",
                 (repo_id,),
@@ -168,7 +175,7 @@ class LocalStorage:
         Returns:
             List of dictionaries with repo metadata
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 "SELECT repository_id, name, root_path, remote_url, last_accessed_at FROM repositories ORDER BY last_accessed_at DESC"
             )
@@ -192,8 +199,8 @@ class LocalStorage:
         Args:
             repo_id: Repository identifier
         """
-        now = datetime.now().isoformat()
-        with sqlite3.connect(self.db_path) as conn:
+        now = datetime.now(UTC).isoformat()
+        with self._connection() as conn:
             conn.execute(
                 "UPDATE repositories SET last_accessed_at = ? WHERE repository_id = ?",
                 (now, repo_id),
@@ -215,10 +222,10 @@ class LocalStorage:
             operation_id: Unique identifier for the queued operation
         """
         operation_id = generate_operation_id()
-        created_at = datetime.now()
+        created_at = datetime.now(UTC)
         expires_at = created_at + timedelta(hours=24)
 
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             conn.execute(
                 """
                 INSERT INTO offline_queue (
@@ -254,9 +261,9 @@ class LocalStorage:
         Returns:
             List of QueuedOperation objects ready for execution
         """
-        now = datetime.now()
+        now = datetime.now(UTC)
 
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 """
                 SELECT operation_id, operation_type, repository_id, payload,
@@ -297,7 +304,7 @@ class LocalStorage:
         Returns:
             True if operation was found and marked complete, False otherwise
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 """
                 UPDATE offline_queue
@@ -327,9 +334,9 @@ class LocalStorage:
         """
         operation.retry_count += 1
         backoff_seconds = min(2**operation.retry_count, 3600)
-        operation.next_retry_at = datetime.now() + timedelta(seconds=backoff_seconds)
+        operation.next_retry_at = datetime.now(UTC) + timedelta(seconds=backoff_seconds)
 
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             conn.execute(
                 """
                 UPDATE offline_queue
@@ -351,9 +358,9 @@ class LocalStorage:
         Returns:
             List of expired QueuedOperation objects
         """
-        now = datetime.now()
+        now = datetime.now(UTC)
 
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 """
                 SELECT operation_id, operation_type, repository_id, payload,
@@ -389,7 +396,7 @@ class LocalStorage:
         Args:
             snapshot: ContextSnapshot to cache
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO snapshot_cache (
@@ -427,7 +434,7 @@ class LocalStorage:
         Returns:
             Most recent ContextSnapshot or None if not found
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 """
                 SELECT snapshot_id, repository_id, branch, captured_at, developer_id,
@@ -471,7 +478,7 @@ class LocalStorage:
         Returns:
             Number of pending operations
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 """
                 SELECT COUNT(*)
@@ -491,9 +498,9 @@ class LocalStorage:
         Returns:
             Number of operations removed
         """
-        now = datetime.now()
+        now = datetime.now(UTC)
 
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 """
                 DELETE FROM offline_queue

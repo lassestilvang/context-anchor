@@ -6,7 +6,7 @@ Requirements: 4.1, 4.2, 4.3, 4.5, 12.6
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, UTC
 from unittest.mock import Mock
 import json
 import base64
@@ -39,7 +39,7 @@ def sample_snapshot():
         snapshot_id=generate_snapshot_id(),
         repository_id="a" * 64,  # SHA-256 hash format
         branch="main",
-        captured_at=datetime.utcnow(),
+        captured_at=datetime.now(UTC),
         developer_id="dev123",
         goals="Implement user authentication",
         rationale="Users need secure access to the application",
@@ -132,7 +132,7 @@ class TestStoreSnapshot:
         store, mock_table = context_store
 
         # Set deleted_at
-        sample_snapshot.deleted_at = datetime.utcnow()
+        sample_snapshot.deleted_at = datetime.now(UTC)
 
         store.store_snapshot(sample_snapshot)
 
@@ -444,7 +444,7 @@ class TestItemToSnapshot:
         """Test converting item with deleted_at timestamp."""
         store, _ = context_store
 
-        deleted_time = datetime.utcnow()
+        deleted_time = datetime.now(UTC)
         item = {
             "snapshot_id": sample_snapshot.snapshot_id,
             "repository_id": sample_snapshot.repository_id,
@@ -628,7 +628,7 @@ class TestPurgeDeletedSnapshots:
         store, mock_table = context_store
 
         # Mock scan response with one expired snapshot
-        past_timestamp = int((datetime.utcnow() - timedelta(days=1)).timestamp())
+        past_timestamp = int((datetime.now(UTC) - timedelta(days=1)).timestamp())
         mock_table.scan.return_value = {
             "Items": [
                 {
@@ -636,7 +636,7 @@ class TestPurgeDeletedSnapshots:
                     "SK": f"BRANCH#{sample_snapshot.branch}#TS#{sample_snapshot.captured_at.isoformat()}",
                     "snapshot_id": sample_snapshot.snapshot_id,
                     "is_deleted": True,
-                    "deleted_at": (datetime.utcnow() - timedelta(days=8)).isoformat(),
+                    "deleted_at": (datetime.now(UTC) - timedelta(days=8)).isoformat(),
                     "purge_after_delete_at": past_timestamp,
                 }
             ]
@@ -661,7 +661,7 @@ class TestPurgeDeletedSnapshots:
         store, mock_table = context_store
 
         # Mock scan response with no expired snapshots (future purge deadline)
-        _ = int((datetime.utcnow() + timedelta(days=6)).timestamp())
+        _ = int((datetime.now(UTC) + timedelta(days=6)).timestamp())
         mock_table.scan.return_value = {
             "Items": []  # Filter expression excludes items with future purge_after_delete_at
         }
@@ -694,7 +694,7 @@ class TestPurgeDeletedSnapshots:
         store, mock_table = context_store
 
         # Mock scan response with multiple expired snapshots
-        past_timestamp = int((datetime.utcnow() - timedelta(days=1)).timestamp())
+        past_timestamp = int((datetime.now(UTC) - timedelta(days=1)).timestamp())
         mock_table.scan.return_value = {
             "Items": [
                 {

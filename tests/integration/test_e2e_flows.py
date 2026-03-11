@@ -7,7 +7,7 @@ Tests 28.1-28.4: Full flow tests with temporary git repos and mocked AWS.
 import os
 import tempfile
 import pytest
-from datetime import datetime
+from datetime import datetime, UTC
 from unittest.mock import Mock
 from pathlib import Path
 import git
@@ -67,7 +67,7 @@ class TestEndToEndCaptureFlow:
                 snapshot_id="snap-001",
                 repository_id=repo_id,
                 branch="main",
-                captured_at=datetime.utcnow(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals="Implement feature X",
                 rationale="Feature X is needed for user onboarding",
@@ -143,7 +143,7 @@ class TestEndToEndRestorationFlow:
                 snapshot_id="snap-main",
                 repository_id=repo_id,
                 branch="main",
-                captured_at=datetime.utcnow(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals="Working on main branch",
                 rationale="Main branch development",
@@ -267,7 +267,7 @@ class TestMultiRepositoryIntegration:
                 snapshot_id="snap-a",
                 repository_id=id_a,
                 branch="main",
-                captured_at=datetime.utcnow(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals="Working on repo A",
                 rationale="Repo A work",
@@ -282,7 +282,7 @@ class TestMultiRepositoryIntegration:
                 snapshot_id="snap-b",
                 repository_id=id_b,
                 branch="main",
-                captured_at=datetime.utcnow(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals="Working on repo B",
                 rationale="Repo B work",

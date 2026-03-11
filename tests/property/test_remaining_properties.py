@@ -12,7 +12,7 @@ Properties tested:
 - Property 86: Configuration File Support
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from unittest.mock import Mock
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -44,7 +44,7 @@ def test_property_13_retention_period_enforcement(retention_days, age_days):
     For any retention_days configuration and snapshot age, a snapshot older
     than retention_days should be eligible for purging.
     """
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     snapshot_time = now - timedelta(days=age_days)
     retention_cutoff = now - timedelta(days=retention_days)
 
@@ -113,7 +113,7 @@ def test_property_23_hook_status_reporting(status, repo_id):
         root_path="/tmp/test",
         remote_url="https://github.com/test/repo.git",
         github_metadata=None,
-        initialized_at=datetime.utcnow(),
+        initialized_at=datetime.now(UTC),
         hook_status=status,
     )
 

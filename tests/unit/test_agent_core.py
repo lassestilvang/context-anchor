@@ -4,7 +4,7 @@ Unit tests for AgentCore
 
 import pytest
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from unittest.mock import Mock, MagicMock
 
 from contextanchor.agent_core import AgentCore
@@ -47,7 +47,7 @@ def sample_signals():
             CommitInfo(
                 hash="abc",
                 message="Initial commit",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 files_changed=["README.md"],
             )
         ],

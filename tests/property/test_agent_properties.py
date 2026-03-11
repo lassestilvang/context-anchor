@@ -3,7 +3,7 @@ Property tests for Agent Core
 """
 
 from hypothesis import given, settings, strategies as st
-from datetime import datetime
+from datetime import datetime, UTC
 from unittest.mock import Mock, MagicMock
 import json
 
@@ -27,7 +27,7 @@ def capture_signals_strategy(draw):
     commits = (
         [
             CommitInfo(
-                hash="abc", message="msg", timestamp=datetime.utcnow(), files_changed=paths[mid:]
+                hash="abc", message="msg", timestamp=datetime.now(UTC), files_changed=paths[mid:]
             )
         ]
         if len(paths) > mid
