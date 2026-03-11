@@ -1,5 +1,6 @@
 import pytest
 
+
 def pytest_collection_modifyitems(items):
     """
     Automatically mark tests based on their directory.
