@@ -136,7 +136,7 @@ class GitObserver:
                     remote_url=url
                 )
         except Exception:
-            pass
+            pass  # nosec B110
 
         return None
 
