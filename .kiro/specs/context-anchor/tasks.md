@@ -24,7 +24,7 @@ The system consists of:
   - Set up virtual environment and dependency management
   - _Requirements: 14.1, 14.2, 14.3, 14.4_
 
-- [~] 2. Implement core data models and validation
+- [x] 2. Implement core data models and validation
   - [x] 2.1 Create domain model classes with dataclasses
     - Implement ContextSnapshot with all required fields and validation
     - Implement CaptureSignals, FileChange, CommitInfo models
@@ -46,7 +46,7 @@ The system consists of:
     - **Validates: Requirements 3.9**
 
 
-- [~] 3. Implement Git Observer component
+- [x] 3. Implement Git Observer component
   - [x] 3.1 Create GitObserver class with repository detection
     - Implement repository root detection using GitPython
     - Implement git availability check
@@ -274,8 +274,8 @@ The system consists of:
     - _Requirements: 3.5, 8.2_
 
 
-- [~] 11. Implement Lambda handler functions
-  - [~] 11.1 Create context capture Lambda handler
+- [x] 11. Implement Lambda handler functions
+  - [x] 11.1 Create context capture Lambda handler
     - Implement handler for POST /v1/contexts
     - Parse request body (repository_id, branch, signals, developer_intent)
     - Invoke AgentCore.synthesize_context
@@ -284,26 +284,26 @@ The system consists of:
     - Handle errors with appropriate HTTP status codes
     - _Requirements: 3.1, 4.1_
 
-  - [~] 11.2 Create context retrieval Lambda handlers
+  - [x] 11.2 Create context retrieval Lambda handlers
     - Implement handler for GET /v1/contexts/latest
     - Implement handler for GET /v1/contexts/{snapshot_id}
     - Implement handler for GET /v1/contexts (list with pagination)
     - Return 404 for missing snapshots
     - _Requirements: 5.1, 12.1_
 
-  - [~] 11.3 Create context deletion Lambda handler
+  - [x] 11.3 Create context deletion Lambda handler
     - Implement handler for DELETE /v1/contexts/{snapshot_id}
     - Call ContextStore.soft_delete_snapshot
     - Return deletion confirmation with purge_after timestamp
     - _Requirements: 6.6, 9.4_
 
-  - [~] 11.4 Create health check Lambda handler
+  - [x] 11.4 Create health check Lambda handler
     - Implement handler for GET /v1/health
     - Return status and timestamp
     - No authentication required
     - _Requirements: 14.4_
 
-  - [~] 11.5 Write integration tests for Lambda handlers
+  - [x] 11.5 Write integration tests for Lambda handlers
     - Test capture flow with mocked Bedrock and DynamoDB
     - Test retrieval with various query parameters
     - Test deletion flow
@@ -338,7 +338,7 @@ The system consists of:
     - Test authentication with API key
     - Test retry logic
 
-- [~] 14. Implement CLI command interface
+- [x] 14. Implement CLI command interface
   - [x] 14.1 Create CLI application with Click/Typer
     - Set up CLI application structure
     - Implement command group for contextanchor
@@ -404,8 +404,8 @@ The system consists of:
     - Test error handling
     - _Requirements: 2.5, 2.7, 8.1, 8.2_
 
-- [~] 16. Implement show-context command
-  - [~] 16.1 Create show-context command handler
+- [x] 16. Implement show-context command
+  - [x] 16.1 Create show-context command handler
     - Detect current repository and branch
     - Support optional --branch parameter
     - Support optional --timestamp parameter for historical snapshots
@@ -416,20 +416,20 @@ The system consists of:
     - Display "no saved context" message if not found
     - _Requirements: 5.2, 5.3, 5.4, 5.8, 6.2, 12.4_
 
-  - [~] 16.2 Implement context display formatting
+  - [x] 16.2 Implement context display formatting
     - Format sections in order: Goals, Rationale, Open Questions, Next Steps
     - Format file links as clickable paths
     - Format PR/issue links as GitHub URLs
     - Use rich terminal formatting for readability
     - _Requirements: 3.8, 10.4_
 
-  - [~] 16.3 Write property tests for context display
+  - [x] 16.3 Write property tests for context display
     - **Property 8: Snapshot Display Order**
     - **Property 16: Complete Context Display**
     - **Property 36: GitHub Link Generation**
     - **Validates: Requirements 3.8, 5.2, 5.3, 5.4, 10.4**
 
-  - [~] 16.4 Write unit tests for show-context
+  - [x] 16.4 Write unit tests for show-context
     - Test display with complete context
     - Test display with missing PR/issue data
     - Test display with no context found
@@ -486,33 +486,33 @@ The system consists of:
     - Test deletion of non-existent snapshot
     - Test offline mode (queue deletion)
 
-- [~] 19. Checkpoint - Ensure all tests pass
+- [x] 19. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [~] 20. Implement automatic context restoration
-  - [~] 20.1 Create branch switch detection mechanism
+- [x] 20. Implement automatic context restoration
+  - [x] 20.1 Create branch switch detection mechanism
     - Implement _hook-branch-switch internal command for git hooks
     - Implement fallback branch detection on CLI invocation
     - Store last known branch in local state
     - Detect branch changes when hooks unavailable
     - _Requirements: 5.6, 5.7_
 
-  - [~] 20.2 Implement automatic context display on branch switch
+  - [x] 20.2 Implement automatic context display on branch switch
     - Trigger show-context automatically on branch switch
     - Retrieve latest context for new branch
     - Display context or "no saved context" message
     - Complete restoration within 2 seconds
     - _Requirements: 5.1, 5.5, 5.8_
 
-  - [~] 20.3 Write property tests for restoration
+  - [x] 20.3 Write property tests for restoration
     - **Property 15: Latest Snapshot Retrieval**
     - **Property 17: Fallback Branch Detection**
     - **Property 60: Primary Branch-Switch Detection Path**
     - **Property 61: No-Context Branch Message**
     - **Validates: Requirements 5.1, 5.6, 5.7, 5.8**
 
-  - [~] 20.4 Write unit tests for automatic restoration
+  - [x] 20.4 Write unit tests for automatic restoration
     - Test hook-triggered restoration
     - Test fallback detection
     - Test with no saved context

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from src.contextanchor.cli import list_contexts, history, delete_context
 
+
 @pytest.fixture
 def mock_cmd_deps():
     with (
@@ -27,14 +28,23 @@ def mock_cmd_deps():
 
         mock_api_client = MagicMock()
         mock_api_client.list_contexts.return_value = [
-            {"snapshot_id": "snap-123", "developer_intent": "Int1", "captured_at": "2024-01-01T00:00:00Z"},
-            {"snapshot_id": "snap-124", "developer_intent": "Int2", "captured_at": "2024-01-02T00:00:00Z"}
+            {
+                "snapshot_id": "snap-123",
+                "developer_intent": "Int1",
+                "captured_at": "2024-01-01T00:00:00Z",
+            },
+            {
+                "snapshot_id": "snap-124",
+                "developer_intent": "Int2",
+                "captured_at": "2024-01-02T00:00:00Z",
+            },
         ]
         mock_api_client_cls.return_value = mock_api_client
 
         yield {
             "api_client": mock_api_client,
         }
+
 
 def test_list_contexts(mock_cmd_deps):
     runner = CliRunner()
@@ -43,12 +53,14 @@ def test_list_contexts(mock_cmd_deps):
     assert "Recent Contexts (2):" in result.output
     mock_cmd_deps["api_client"].list_contexts.assert_called_with("repo1", None, 5)
 
+
 def test_history(mock_cmd_deps):
     runner = CliRunner()
     result = runner.invoke(history, ["-b", "feature-x", "-l", "10"])
     assert result.exit_code == 0
     assert "Recent Contexts (2):" in result.output
     mock_cmd_deps["api_client"].list_contexts.assert_called_with("repo1", "feature-x", 10)
+
 
 def test_delete_context(mock_cmd_deps):
     runner = CliRunner()

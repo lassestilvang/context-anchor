@@ -99,10 +99,87 @@ def _install_git_hook(repo_root: Path, hook_name: str, script_content: str) -> s
         return "degraded"
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.version_option()
-def main() -> None:
+@click.pass_context
+def main(ctx: click.Context) -> None:
     """ContextAnchor: Developer workflow state management system."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
+
+    # Fallback branch switch detection
+    if ctx.invoked_subcommand not in ["init", "_hook-branch-switch"]:
+        repo_root = _find_git_root()
+        if repo_root:
+            state_file = repo_root / ".contextanchor" / "state.json"
+            from .git_observer import GitObserver
+            import json
+
+            git_obs = GitObserver(str(repo_root))
+            branch = git_obs.get_current_branch()
+
+            state = {}
+            if state_file.exists():
+                try:
+                    with open(state_file, "r") as f:
+                        state = json.load(f)
+                except Exception:
+                    pass
+
+            last_branch = state.get("last_branch")
+            if branch and branch != last_branch:
+                state["last_branch"] = branch
+                try:
+                    with open(state_file, "w") as f:
+                        json.dump(state, f)
+                except Exception:
+                    pass
+
+                # Show context as fallback
+                click.echo(
+                    f"\\n--- ContextAnchor: Detected switch to branch '{branch}' (fallback) ---"
+                )
+                try:
+                    from .config import load_config
+
+                    config_path = repo_root / ".contextanchor" / "config.yaml"
+                    if config_path.exists():
+                        config = load_config(config_path)
+                        from .api_client import APIClient
+                        from .local_storage import LocalStorage
+
+                        client = APIClient(
+                            config.api_endpoint, config.retry_attempts, config.api_timeout_seconds
+                        )
+                        repo_id = git_obs.generate_repository_id() or "unknown"
+
+                        try:
+                            contexts = client.list_contexts(repo_id, branch, 1)
+                            ctx_list = (
+                                contexts.get("contexts", contexts)
+                                if isinstance(contexts, dict)
+                                else contexts
+                            )
+                            if ctx_list and len(ctx_list) > 0:
+                                _render_context(ctx_list[0], "text")
+                            else:
+                                click.echo("No saved context found for this branch.")
+                        except ConnectionError:
+                            local = LocalStorage()
+                            cached = local.get_cached_snapshot(repo_id, branch)
+                            if cached:
+                                import dataclasses
+
+                                try:
+                                    c_dict = dataclasses.asdict(cached)
+                                except TypeError:
+                                    c_dict = getattr(cached, "__dict__", {})
+                                _render_context(c_dict, "text")
+                            else:
+                                click.echo("No saved context found for this branch.")
+                except Exception:
+                    pass  # Keep fallback quiet on errors
 
 
 @main.command()
@@ -139,6 +216,86 @@ def init() -> None:
 
     click.echo(f"Initialized ContextAnchor in {repo_root}")
     click.echo(f"Hook status: {overall_status}")
+
+
+@main.command(name="_hook-branch-switch", hidden=True)
+@click.argument("prev_head", required=False)
+@click.argument("new_head", required=False)
+def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> None:
+    """Internal hook for branch switches."""
+    repo_root = _find_git_root()
+    if not repo_root:
+        return
+
+    state_file = repo_root / ".contextanchor" / "state.json"
+
+    from .git_observer import GitObserver
+
+    git_obs = GitObserver(str(repo_root))
+    branch = git_obs.get_current_branch()
+
+    import json
+
+    state = {}
+    if state_file.exists():
+        try:
+            with open(state_file, "r") as f:
+                state = json.load(f)
+        except Exception:
+            pass
+
+    old_branch = state.get("last_branch")
+
+    if branch:
+        state["last_branch"] = branch
+        try:
+            with open(state_file, "w") as f:
+                json.dump(state, f)
+        except Exception:
+            pass
+
+    if old_branch != branch and branch:
+        click.echo(f"\\n--- ContextAnchor: Switched to branch '{branch}' ---")
+        try:
+            from .config import load_config
+
+            config_path = repo_root / ".contextanchor" / "config.yaml"
+            if not config_path.exists():
+                return
+            config = load_config(config_path)
+
+            from .api_client import APIClient
+            from .local_storage import LocalStorage
+
+            client = APIClient(
+                config.api_endpoint, config.retry_attempts, config.api_timeout_seconds
+            )
+            repo_id = git_obs.generate_repository_id() or "unknown"
+
+            try:
+                contexts = client.list_contexts(repo_id, branch, 1)
+                ctx_list = (
+                    contexts.get("contexts", contexts) if isinstance(contexts, dict) else contexts
+                )
+                if ctx_list and len(ctx_list) > 0:
+                    _render_context(ctx_list[0], "text")
+                else:
+                    click.echo("No saved context found for this branch.")
+            except ConnectionError:
+                local = LocalStorage()
+                cached = local.get_cached_snapshot(repo_id, branch)
+                if cached:
+                    import dataclasses
+
+                    try:
+                        c_dict = dataclasses.asdict(cached)
+                    except TypeError:
+                        c_dict = getattr(cached, "__dict__", {})
+                    _render_context(c_dict, "text")
+                else:
+                    click.echo("No saved context found for this branch.")
+        except Exception as e:
+            click.echo(f"Error restoring context: {e}")
 
 
 if __name__ == "__main__":
@@ -326,6 +483,7 @@ def list_contexts(limit: int, output_format: str) -> None:
     if not repo_root:
         raise click.Abort()
     from .config import load_config
+
     config = load_config(repo_root / ".contextanchor" / "config.yaml")
 
     from .git_observer import GitObserver
@@ -362,6 +520,7 @@ def history(branch: Optional[str], limit: int, output_format: str) -> None:
     if not repo_root:
         raise click.Abort()
     from .config import load_config
+
     config = load_config(repo_root / ".contextanchor" / "config.yaml")
 
     from .git_observer import GitObserver
@@ -390,6 +549,7 @@ def delete_context(snapshot_id: str) -> None:
     if not repo_root:
         raise click.Abort()
     from .config import load_config
+
     config = load_config(repo_root / ".contextanchor" / "config.yaml")
 
     from .api_client import APIClient
