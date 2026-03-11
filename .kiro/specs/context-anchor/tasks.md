@@ -206,7 +206,7 @@ The system consists of:
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [~] 9. Implement Context Store component
+- [x] 9. Implement Context Store component
   - [x] 9.1 Create ContextStore class with DynamoDB client
     - Initialize boto3 DynamoDB client
     - Implement store_snapshot method with proper key structure
@@ -225,28 +225,28 @@ The system consists of:
     - **Property 10: Context Storage Round Trip**
     - **Validates: Requirements 4.1**
 
-  - [ ] 9.4 Write property tests for indexing
+  - [x] 9.4 Write property tests for indexing
     - **Property 11: Repository and Branch Indexing**
     - **Property 12: Timestamp Indexing**
     - **Validates: Requirements 4.2, 4.3**
 
-  - [ ] 9.5 Write property test for soft delete retention
+  - [x] 9.5 Write property test for soft delete retention
     - **Property 14: Soft Delete Retention**
     - **Validates: Requirements 4.6**
 
-  - [~] 9.6 Write property test for developer scoped storage
+  - [x] 9.6 Write property test for developer scoped storage
     - **Property 32: Developer Scoped Storage**
     - **Validates: Requirements 9.3**
 
-  - [~] 9.7 Write unit tests for Context Store operations
+  - [x] 9.7 Write unit tests for Context Store operations
     - Test pagination with next_token
     - Test empty result sets
     - Test DynamoDB error handling
     - Test TTL expiration behavior
     - _Requirements: 4.4, 4.5, 12.6_
 
-- [~] 10. Implement Agent Core component (Lambda)
-  - [~] 10.1 Create AgentCore class with Bedrock client
+- [x] 10. Implement Agent Core component (Lambda)
+  - [x] 10.1 Create AgentCore class with Bedrock client
     - Initialize boto3 Bedrock Runtime client
     - Implement synthesize_context method
     - Implement _build_bedrock_prompt with template
@@ -254,18 +254,18 @@ The system consists of:
     - Implement _validate_snapshot for schema compliance
     - _Requirements: 3.1, 14.2_
 
-  - [~] 10.2 Implement Bedrock prompt template
+  - [x] 10.2 Implement Bedrock prompt template
     - Create prompt template with sections for developer intent and git signals
     - Include instructions for Goals, Rationale, Open Questions, Next Steps
     - Add word limit constraint (500 words)
     - Add action verb requirement for Next Steps
     - _Requirements: 3.6, 3.9_
 
-  - [~] 10.3 Write property test for context capture signal inclusion
+  - [x] 10.3 Write property test for context capture signal inclusion
     - **Property 5: Context Capture Includes All Signal Types**
     - **Validates: Requirements 2.1, 2.3, 2.4, 2.6**
 
-  - [~] 10.4 Write unit tests for Agent Core
+  - [x] 10.4 Write unit tests for Agent Core
     - Test Bedrock prompt construction
     - Test response parsing with various formats
     - Test validation error handling
@@ -309,12 +309,12 @@ The system consists of:
     - Test deletion flow
     - Test error scenarios (missing data, invalid input)
 
-- [~] 12. Checkpoint - Ensure all tests pass
+- [x] 12. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [~] 13. Implement API client for CLI
-  - [~] 13.1 Create APIClient class
+- [x] 13. Implement API client for CLI
+  - [x] 13.1 Create APIClient class
     - Implement HTTP client with requests library
     - Implement create_context method (POST /v1/contexts)
     - Implement get_latest_context method (GET /v1/contexts/latest)
@@ -324,14 +324,14 @@ The system consists of:
     - Load API key from ~/.contextanchor/credentials
     - _Requirements: 4.1, 5.1, 6.3, 6.6, 12.2_
 
-  - [~] 13.2 Implement network error handling
+  - [x] 13.2 Implement network error handling
     - Detect network unavailability before API calls
     - Implement retry logic with exponential backoff
     - Implement timeout handling (30 seconds default)
     - Return clear error messages for network failures
     - _Requirements: 8.4, 8.7_
 
-  - [~] 13.3 Write unit tests for API client
+  - [x] 13.3 Write unit tests for API client
     - Test successful API calls with mocked responses
     - Test network error handling
     - Test timeout handling
@@ -339,13 +339,13 @@ The system consists of:
     - Test retry logic
 
 - [~] 14. Implement CLI command interface
-  - [~] 14.1 Create CLI application with Click/Typer
+  - [x] 14.1 Create CLI application with Click/Typer
     - Set up CLI application structure
     - Implement command group for contextanchor
     - Add version and help options
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.6_
 
-  - [~] 14.2 Implement init command
+  - [x] 14.2 Implement init command
     - Detect current repository
     - Check if already initialized
     - Create .contextanchor/config.yaml in repository root
@@ -354,13 +354,13 @@ The system consists of:
     - Display success message or error
     - _Requirements: 7.1, 7.2, 7.3, 7.5, 7.6_
 
-  - [~] 14.3 Write property tests for init command
+  - [x] 14.3 Write property tests for init command
     - **Property 20: Initialization Creates Configuration**
     - **Property 21: Git Availability Check**
     - **Property 67: Re-Initialization Detection**
     - **Validates: Requirements 7.2, 7.4, 7.3**
 
-  - [~] 14.4 Write unit tests for init command
+  - [x] 14.4 Write unit tests for init command
     - Test initialization in valid repository
     - Test re-initialization detection
     - Test initialization outside repository

@@ -135,3 +135,110 @@ def test_property_10_context_storage_round_trip(snapshot):
 
     # Verify the query filters out deleted snapshots
     assert "FilterExpression" in query_kwargs, "Query must filter out deleted snapshots"
+
+
+@settings(max_examples=100)
+@given(snapshot=valid_context_snapshot())
+def test_property_11_repository_and_branch_indexing(snapshot):
+    """
+    Feature: context-anchor, Property 11: Repository and Branch Indexing
+    Validates: Requirements 4.2
+    Ensures that get_latest_snapshot and list_snapshots construct queries
+    with correct PK=REPO#id and SK begins_with(BRANCH#branch#TS#).
+    """
+    mock_resource = Mock()
+    mock_table = Mock()
+    mock_resource.Table.return_value = mock_table
+    store = ContextStore(table_name="TestTable", dynamodb_resource=mock_resource)
+
+    mock_table.query.return_value = {"Items": []}
+
+    # Test get_latest_snapshot
+    store.get_latest_snapshot(snapshot.repository_id, snapshot.branch)
+    mock_table.query.assert_called_once()
+
+    # Verify primary keys on store_snapshot
+    store.store_snapshot(snapshot)
+    put_kwargs = mock_table.put_item.call_args.kwargs["Item"]
+    assert put_kwargs["PK"] == f"REPO#{snapshot.repository_id}"
+    assert put_kwargs["SK"].startswith(f"BRANCH#{snapshot.branch}#TS#")
+
+
+@settings(max_examples=100)
+@given(snapshot=valid_context_snapshot())
+def test_property_12_timestamp_indexing_and_ordering(snapshot):
+    """
+    Feature: context-anchor, Property 12: Timestamp Indexing
+    Validates: Requirements 4.3
+    Snapshots retrieved by repository/branch must be correctly ordered by timestamp descending.
+    """
+    mock_resource = Mock()
+    mock_table = Mock()
+    mock_resource.Table.return_value = mock_table
+    store = ContextStore(table_name="TestTable", dynamodb_resource=mock_resource)
+
+    mock_table.query.return_value = {"Items": []}
+
+    # list_snapshots should use ScanIndexForward=False
+    store.list_snapshots(snapshot.repository_id)
+    kwargs = mock_table.query.call_args.kwargs
+    assert kwargs.get("ScanIndexForward") is False
+
+    mock_table.query.reset_mock()
+    store.list_snapshots(snapshot.repository_id, branch=snapshot.branch)
+    kwargs = mock_table.query.call_args.kwargs
+    assert kwargs.get("ScanIndexForward") is False
+
+
+@settings(max_examples=100)
+@given(snapshot=valid_context_snapshot())
+def test_property_14_soft_delete_retention(snapshot):
+    """
+    Feature: context-anchor, Property 14: Soft Delete Retention
+    Validates: Requirements 4.6
+    Soft deletion should set is_deleted=True, deleted_at, and purge_after_delete_at ~7 days in future.
+    """
+    mock_resource = Mock()
+    mock_table = Mock()
+    mock_resource.Table.return_value = mock_table
+    store = ContextStore(table_name="TestTable", dynamodb_resource=mock_resource)
+
+    # Mock get snapshot to simulate finding it before update
+    mock_table.query.return_value = {"Items": [{"PK": "REPO#1", "SK": "BRANCH#1"}]}
+
+    result = store.soft_delete_snapshot(snapshot.snapshot_id)
+
+    assert result["deleted"] is True
+    assert "purge_after" in result
+
+    mock_table.update_item.assert_called_once()
+    update_kwargs = mock_table.update_item.call_args.kwargs
+
+    assert "is_deleted = :true" in update_kwargs["UpdateExpression"]
+    assert "deleted_at = :deleted_at" in update_kwargs["UpdateExpression"]
+    assert "purge_after_delete_at = :purge_after" in update_kwargs["UpdateExpression"]
+
+    vals = update_kwargs["ExpressionAttributeValues"]
+    assert vals[":true"] is True
+    assert ":deleted_at" in vals
+    assert isinstance(vals[":purge_after"], int)
+
+
+@settings(max_examples=100)
+@given(snapshot=valid_context_snapshot())
+def test_property_32_developer_scoped_storage(snapshot):
+    """
+    Feature: context-anchor, Property 32: Developer Scoped Storage
+    Validates: Requirements 9.3
+    Snapshots must be indexed by developer_id for isolated retrieval.
+    """
+    mock_resource = Mock()
+    mock_table = Mock()
+    mock_resource.Table.return_value = mock_table
+    store = ContextStore(table_name="TestTable", dynamodb_resource=mock_resource)
+
+    store.store_snapshot(snapshot)
+
+    put_kwargs = mock_table.put_item.call_args.kwargs["Item"]
+    assert put_kwargs["GSI1PK"] == f"DEV#{snapshot.developer_id}", "Must index by developer_id"
+    assert put_kwargs["GSI1SK"].startswith("TS#"), "Must sort by timestamp within developer scope"
