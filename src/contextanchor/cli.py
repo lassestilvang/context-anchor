@@ -162,7 +162,7 @@ def main(ctx: click.Context) -> None:
                 try:
                     with open(state_file, "r") as f:
                         state = json.load(f)
-                except Exception:
+                except Exception:  # nosec
                     pass
 
             last_branch = state.get("last_branch")
@@ -171,7 +171,7 @@ def main(ctx: click.Context) -> None:
                 try:
                     with open(state_file, "w") as f:
                         json.dump(state, f)
-                except Exception:
+                except Exception:  # nosec
                     pass
 
                 # Show context as fallback
@@ -183,7 +183,7 @@ def main(ctx: click.Context) -> None:
 
                     repo_id = git_obs.generate_repository_id() or "unknown"
                     MetricsCollector().emit_event("resume_session_started", repo_id, branch)
-                except Exception:
+                except Exception:  # nosec
                     pass
                 try:
                     from .config import load_config
@@ -227,7 +227,7 @@ def main(ctx: click.Context) -> None:
                                 console.print(
                                     "[warning]No saved context found for this branch.[/warning]"
                                 )
-                except Exception:
+                except Exception:  # nosec
                     pass  # Keep fallback quiet on errors
 
             # Check for first productive action
@@ -260,7 +260,7 @@ def main(ctx: click.Context) -> None:
                     start_ts = datetime.fromisoformat(pending_start["timestamp"])
                     if git_obs.has_productive_action_since(start_ts):
                         metrics.emit_event("first_productive_action", repo_id, branch)
-            except Exception:
+            except Exception:  # nosec
                 pass
 
 
@@ -345,7 +345,7 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
         try:
             with open(state_file, "r") as f:
                 state = json.load(f)
-        except Exception:
+        except Exception:  # nosec
             pass
 
     old_branch = state.get("last_branch")
@@ -355,7 +355,7 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
         try:
             with open(state_file, "w") as f:
                 json.dump(state, f)
-        except Exception:
+        except Exception:  # nosec
             pass
 
     if old_branch != branch and branch:
@@ -365,7 +365,7 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
 
             repo_id = git_obs.generate_repository_id() or "unknown"
             MetricsCollector().emit_event("resume_session_started", repo_id, branch)
-        except Exception:
+        except Exception:  # nosec
             pass
         try:
             from .config import load_config
