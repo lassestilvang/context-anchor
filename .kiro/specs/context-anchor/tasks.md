@@ -922,6 +922,11 @@ The system consists of:
     - Validate cached snapshot restoration when network is unavailable
     - _Requirements: 8.1, 8.4, 8.7, 8.8_
 
+  - [ ] 37.5 Implement manual `sync` command
+    - Provide a dedicated `contextanchor sync` command to force queue draining
+    - Display a progress bar or summary of synced/pending operations
+    - _Requirements: 8.4, 13.5_
+
 - [ ] 38. Wire GitHub enrichment through capture and restore flow
   - [ ] 38.1 Populate PR and issue references during signal capture
     - Parse commit messages and branch metadata for PR/issue references
@@ -943,9 +948,15 @@ The system consists of:
     - Add integration test validating stored links appear on restoration
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.6_
 
+  - [ ] 38.5 Harden commit and metadata parsing patterns
+    - Implement robust regex for various PR/Issue mention styles (e.g., `#123`, `closes #456`, `PR 789`)
+    - Test parsing against diverse commit message samples
+    - _Requirements: 1.4, 10.2_
+
 - [ ] 39. Consolidate backend runtime paths and developer scoping
   - [ ] 39.1 Choose a single canonical backend handler implementation
-    - Decide whether `lambda/*.py` or `src/contextanchor/handlers.py` is authoritative
+    - Decide whether `lambda/*.py` or `src/contextanchor/handlers.py` is authoritative (Recommended: `src/contextanchor/handlers.py`)
+    - Consolidate business logic in the authoritative module; use the other for thin deployment wrappers
     - Remove duplicate logic or generate one from shared implementation to prevent drift
     - Align deployment wiring with the canonical implementation
     - _Requirements: 14.3, 14.4_
