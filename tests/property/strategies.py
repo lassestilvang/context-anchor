@@ -9,8 +9,7 @@ Provides reusable strategies for generating valid test data for:
 - Repository
 """
 
-import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from hypothesis import strategies as st
 from src.contextanchor.models import (
     ContextSnapshot,
@@ -23,13 +22,16 @@ from src.contextanchor.models import (
 
 # Basic primitive strategies
 
+
 def valid_uuid_string():
     """Generate a valid UUID string."""
     return st.uuids().map(str)
 
+
 def valid_repository_id():
     """Generate a valid repository ID (64 hex characters)."""
     return st.text(min_size=64, max_size=64, alphabet="0123456789abcdef")
+
 
 @st.composite
 def valid_branch_name(draw):
@@ -46,11 +48,14 @@ def valid_branch_name(draw):
         branch = "main"
     return branch
 
+
 def valid_developer_id():
     """Generate a valid developer ID."""
     return st.text(min_size=1, max_size=100)
 
+
 # Content strategies
+
 
 @st.composite
 def action_verb_step(draw):
@@ -59,6 +64,7 @@ def action_verb_step(draw):
     verb = verb.capitalize()
     rest = draw(st.text(min_size=5, max_size=140, alphabet="abcdefghijklmnopqrstuvwxyz "))
     return f"{verb} {rest.strip()}"
+
 
 @st.composite
 def valid_file_path(draw):
@@ -77,7 +83,9 @@ def valid_file_path(draw):
     extension = draw(st.sampled_from(["py", "js", "ts", "java", "go", "rs", "md", "txt", "json"]))
     return "/".join(parts) + f".{extension}"
 
+
 # Model strategies
+
 
 @st.composite
 def valid_file_change(draw):
@@ -89,6 +97,7 @@ def valid_file_change(draw):
         lines_deleted=draw(st.integers(min_value=0, max_value=1000)),
     )
 
+
 @st.composite
 def valid_commit_info(draw):
     """Generate a valid CommitInfo instance."""
@@ -99,16 +108,20 @@ def valid_commit_info(draw):
         files_changed=draw(st.lists(valid_file_path(), min_size=1, max_size=10)),
     )
 
+
 @st.composite
 def valid_github_repo(draw):
     """Generate a valid GitHubRepo instance."""
     owner = draw(st.text(min_size=1, max_size=39, alphabet="abcdefghijklmnopqrstuvwxyz0123456789-"))
-    name = draw(st.text(min_size=1, max_size=100, alphabet="abcdefghijklmnopqrstuvwxyz0123456789-._"))
+    name = draw(
+        st.text(min_size=1, max_size=100, alphabet="abcdefghijklmnopqrstuvwxyz0123456789-._")
+    )
     return GitHubRepo(
         owner=owner,
         name=name,
         remote_url=f"https://github.com/{owner}/{name}.git",
     )
+
 
 @st.composite
 def valid_capture_signals(draw):
@@ -124,6 +137,7 @@ def valid_capture_signals(draw):
         capture_source=draw(st.sampled_from(["hook", "cli", "watcher"])),
     )
 
+
 @st.composite
 def valid_context_snapshot(draw):
     """Generate a valid ContextSnapshot instance."""
@@ -132,7 +146,7 @@ def valid_context_snapshot(draw):
     rationale = draw(st.text(min_size=20, max_size=300))
     open_questions = draw(st.lists(st.text(min_size=5, max_size=150), min_size=2, max_size=4))
     next_steps = draw(st.lists(action_verb_step(), min_size=1, max_size=3))
-    
+
     return ContextSnapshot(
         snapshot_id=draw(valid_uuid_string()),
         repository_id=draw(valid_repository_id()),

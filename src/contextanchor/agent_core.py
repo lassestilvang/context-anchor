@@ -129,7 +129,7 @@ CRITICAL CONSTRAINTS:
         developer_id: str,
         intent: str,
         signals: CaptureSignals,
-        callback=None,
+        callback: Any = None,
     ) -> None:
         """
         Synthesize context asynchronously in a background thread.
@@ -142,7 +142,7 @@ CRITICAL CONSTRAINTS:
         """
         import threading
 
-        def _run():
+        def _run() -> None:
             try:
                 snapshot = self.synthesize_context(
                     repository_id, branch, developer_id, intent, signals

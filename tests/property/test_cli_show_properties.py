@@ -33,14 +33,14 @@ def test_property_render_correctness(snapshot_id, goals, rationale, next_steps):
 
         # The first call to print should be our Panel
         panel = mock_print.call_args_list[0].args[0]
-        
+
         # Check title/subtitle for snapshot_id
         assert snapshot_id in panel.title
-        
+
         # Check Markdown content for goals, rationale, next_steps
         markdown_obj = panel.renderable
         # In rich, Markdown object stores its source in .markup attribute
         assert goals in markdown_obj.markup
         assert rationale in markdown_obj.markup
         for step in next_steps:
-             assert step in markdown_obj.markup
+            assert step in markdown_obj.markup

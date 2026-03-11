@@ -8,9 +8,8 @@ import os
 import tempfile
 import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 from pathlib import Path
-from click.testing import CliRunner
 import git
 
 from src.contextanchor.git_observer import GitObserver
@@ -35,6 +34,7 @@ def create_temp_git_repo(path, remote_url=None, initial_file="README.md"):
 
 # ── 28.1 End-to-End Capture Flow ──
 
+
 @pytest.mark.integration
 class TestEndToEndCaptureFlow:
     """Test full flow: init → save-context → verify storage."""
@@ -46,7 +46,7 @@ class TestEndToEndCaptureFlow:
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = os.path.join(tmpdir, "test-repo")
             os.makedirs(repo_path)
-            git_repo = create_temp_git_repo(repo_path, "https://github.com/test/repo.git")
+            create_temp_git_repo(repo_path, "https://github.com/test/repo.git")
 
             # Step 1: Detect repository
             observer = GitObserver(repo_path)
@@ -115,6 +115,7 @@ class TestEndToEndCaptureFlow:
 
 # ── 28.2 End-to-End Restoration Flow ──
 
+
 @pytest.mark.integration
 class TestEndToEndRestorationFlow:
     """Test full flow: save → switch branch → restore context."""
@@ -126,7 +127,7 @@ class TestEndToEndRestorationFlow:
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = os.path.join(tmpdir, "test-repo")
             os.makedirs(repo_path)
-            git_repo = create_temp_git_repo(repo_path, "https://github.com/test/repo.git")
+            create_temp_git_repo(repo_path, "https://github.com/test/repo.git")
 
             observer = GitObserver(repo_path)
             repo_id = observer.generate_repository_id("https://github.com/test/repo.git", repo_path)
@@ -182,6 +183,7 @@ class TestEndToEndRestorationFlow:
 
 # ── 28.3 Offline Sync Flow ──
 
+
 @pytest.mark.integration
 class TestOfflineSyncFlow:
     """Test offline queueing and sync with exponential backoff."""
@@ -226,6 +228,7 @@ class TestOfflineSyncFlow:
 
 
 # ── 28.4 Multi-Repository Integration ──
+
 
 @pytest.mark.integration
 class TestMultiRepositoryIntegration:

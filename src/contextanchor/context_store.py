@@ -155,8 +155,8 @@ class ContextStore:
         """
         # Build filter expression
         filter_expr = "attribute_not_exists(is_deleted) OR is_deleted = :false"
-        attr_values = {":false": False}
-        
+        attr_values: dict[str, Any] = {":false": False}
+
         if developer_id:
             filter_expr = f"({filter_expr}) AND developer_id = :dev_id"
             attr_values[":dev_id"] = developer_id
@@ -209,7 +209,7 @@ class ContextStore:
         # Build query parameters
         # Build filter expression
         filter_expr = "attribute_not_exists(is_deleted) OR is_deleted = :false"
-        attr_values = {":false": False}
+        attr_values: dict[str, Any] = {":false": False}
 
         if developer_id:
             filter_expr = f"({filter_expr}) AND developer_id = :dev_id"

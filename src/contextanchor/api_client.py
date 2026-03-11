@@ -4,7 +4,6 @@ import requests
 import ssl
 from typing import Dict, Any, Optional, cast
 from requests.adapters import HTTPAdapter
-from urllib3.poolmanager import PoolManager
 
 
 class TLSAdapter(HTTPAdapter):
@@ -12,7 +11,7 @@ class TLSAdapter(HTTPAdapter):
     HTTP adapter that enforces a minimum TLS version.
     """
 
-    def __init__(self, min_tls_version: int = ssl.TLSVersion.TLSv1_2, **kwargs: Any):
+    def __init__(self, min_tls_version: Any = ssl.TLSVersion.TLSv1_2, **kwargs: Any):
         self.min_tls_version = min_tls_version
         super().__init__(**kwargs)
 
@@ -61,10 +60,12 @@ class APIClient:
             except requests.exceptions.Timeout:
                 if attempt == self.retry_attempts:
                     from .errors import NetworkError
+
                     raise NetworkError(f"Request timed out after {self.timeout}s")
             except requests.exceptions.ConnectionError:
                 if attempt == self.retry_attempts:
                     from .errors import NetworkError
+
                     raise NetworkError("Network is unavailable or server is unreachable")
             except requests.exceptions.HTTPError as e:
                 # Only retry 5xx errors
@@ -72,10 +73,13 @@ class APIClient:
                     pass
                 else:
                     from .errors import NetworkError, ConfigurationError, DataError
+
                     if e.response.status_code == 401 or e.response.status_code == 403:
                         raise ConfigurationError("Invalid or missing API key")
                     elif 400 <= e.response.status_code < 500:
-                        raise DataError(f"Invalid request ({e.response.status_code}): {e.response.text}")
+                        raise DataError(
+                            f"Invalid request ({e.response.status_code}): {e.response.text}"
+                        )
                     else:
                         raise NetworkError(f"API Error {e.response.status_code}: {e.response.text}")
 
@@ -84,6 +88,7 @@ class APIClient:
                 time.sleep(2**attempt)
 
         from .errors import NetworkError
+
         raise NetworkError("Max retries exceeded")
 
     def create_context(

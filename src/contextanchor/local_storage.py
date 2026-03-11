@@ -477,11 +477,12 @@ class LocalStorage:
                 SELECT COUNT(*)
                 FROM offline_queue
                 WHERE repository_id = ? AND completed = 0
-            """,
+                """,
                 (repository_id,),
             )
 
-            return cursor.fetchone()[0]
+            row = cursor.fetchone()
+            return int(row[0]) if row else 0
 
     def cleanup_expired_operations(self) -> int:
         """

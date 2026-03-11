@@ -37,4 +37,5 @@ settings.load_profile(profile)
 seed = os.getenv("HYPOTHESIS_SEED")
 if seed:
     import hypothesis
+
     hypothesis.seed(int(seed))

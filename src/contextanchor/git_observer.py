@@ -11,6 +11,10 @@ import os
 from datetime import datetime
 from typing import Optional
 from urllib.parse import urlparse
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .models import CommitInfo
 
 import git
 from git.exc import InvalidGitRepositoryError, GitCommandError
@@ -240,17 +244,21 @@ class GitObserver:
                 # Compare with parent to get changed files
                 parent = commit.parents[0]
                 diffs = parent.diff(commit)
-                files_changed = [diff.a_path or diff.b_path for diff in diffs]
+                files_changed = [str(diff.a_path or diff.b_path) for diff in diffs if diff.a_path or diff.b_path]
             else:
                 # First commit - all files are new
-                files_changed = [item.path for item in commit.tree.traverse()]
+                files_changed = [str(getattr(item, "path")) for item in commit.tree.traverse() if getattr(item, "path", None)]
 
             # Import here to avoid circular dependency
             from contextanchor.models import CommitInfo
 
+            message_str = commit.message
+            if isinstance(message_str, bytes):
+                message_str = message_str.decode("utf-8")
+
             return CommitInfo(
                 hash=commit.hexsha,
-                message=commit.message.strip(),
+                message=message_str.strip(),
                 timestamp=commit.committed_datetime,
                 files_changed=files_changed,
             )
@@ -309,7 +317,7 @@ class GitObserver:
             # Get unstaged changes (working directory vs index)
             unstaged_diffs = self._repo.index.diff(None)
             for diff in unstaged_diffs:
-                path = diff.a_path or diff.b_path
+                path = str(diff.a_path or diff.b_path)
                 status = self._get_change_status(diff)
                 changes.append(
                     FileChange(
@@ -324,7 +332,7 @@ class GitObserver:
             try:
                 staged_diffs = self._repo.index.diff("HEAD")
                 for diff in staged_diffs:
-                    path = diff.a_path or diff.b_path
+                    path = str(diff.a_path or diff.b_path)
                     status = self._get_change_status(diff)
                     changes.append(
                         FileChange(
@@ -394,7 +402,7 @@ class GitObserver:
         except (GitCommandError, AttributeError):
             return None
 
-    def _get_change_status(self, diff) -> str:
+    def _get_change_status(self, diff: Any) -> str:
         """
         Determine the change status from a git diff object.
 
@@ -668,21 +676,25 @@ contextanchor _hook-commit &
             return "degraded"
         else:
             return "unavailable"
+
     def has_productive_action_since(self, since_timestamp: datetime) -> bool:
         """
-        Check if any productive action (staged changes or new commits) 
+        Check if any productive action (staged changes or new commits)
         has occurred since the given timestamp.
-        
+
         Args:
             since_timestamp: The starting timestamp (UTC)
-            
+
         Returns:
             True if staged changes or new commits exist, False otherwise
         """
         if self._repo is None:
             if self.detect_repository_root() is None:
                 return False
-        
+
+        if self._repo is None:
+            return False
+
         # Check for staged changes
         try:
             if len(self._repo.index.diff("HEAD")) > 0:
@@ -690,7 +702,7 @@ contextanchor _hook-commit &
         except (GitCommandError, Exception):
             # Might be empty repo or detached head
             pass
-            
+
         # Check for new commits
         try:
             # Iter commits on current branch
@@ -699,18 +711,19 @@ contextanchor _hook-commit &
                 # commit.committed_datetime is offset-aware
                 # Convert since_timestamp to be offset-aware if it's naive (assuming UTC)
                 from datetime import timezone
+
                 if since_timestamp.tzinfo is None:
                     since_ts = since_timestamp.replace(tzinfo=timezone.utc)
                 else:
                     since_ts = since_timestamp
-                
+
                 if commit.committed_datetime > since_ts:
                     return True
                 else:
-                    # Since iter_commits is in reverse chronological order, 
+                    # Since iter_commits is in reverse chronological order,
                     # we can stop once we hit a commit older than the timestamp
                     break
         except (GitCommandError, Exception):
             pass
-            
+
         return False

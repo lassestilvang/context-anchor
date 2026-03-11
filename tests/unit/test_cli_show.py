@@ -16,7 +16,7 @@ def mock_show_deps():
         patch("src.contextanchor.local_storage.LocalStorage") as mock_local_storage_cls,
         patch("src.contextanchor.config.load_config") as mock_load_config,
         patch("pathlib.Path.exists") as mock_exists,
-        patch("src.contextanchor.logging.get_logger") as mock_get_logger,
+        patch("src.contextanchor.logging.get_logger"),
     ):
 
         mock_find_git.return_value = Path("/mock/repo")
@@ -99,7 +99,8 @@ def test_show_context_json_format(mock_show_deps):
     # ensure valid json. Might have multiple objects or prefixes if status printed.
     # We strip any potential rich output before/after
     import re
-    json_match = re.search(r'\{.*\}', result.output, re.DOTALL)
+
+    json_match = re.search(r"\{.*\}", result.output, re.DOTALL)
     assert json_match, f"No JSON found in output: {result.output}"
     data = json.loads(json_match.group(0))
     assert data["snapshot_id"] == "snap-123"

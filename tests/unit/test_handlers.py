@@ -67,7 +67,7 @@ def test_get_latest_context_handler_success(mock_context_store):
         relevant_files=[],
         related_prs=[],
         related_issues=[],
-        deleted_at=None
+        deleted_at=None,
     )
     mock_context_store.get_latest_snapshot.return_value = snapshot
 

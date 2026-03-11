@@ -6,7 +6,7 @@ blocks before data is transmitted to the API.
 """
 
 import re
-from typing import List, Optional
+
 
 class PrivacyFilter:
     """
@@ -55,7 +55,7 @@ class PrivacyFilter:
         redacted = text
         for pattern in self.compiled_patterns:
             redacted = pattern.sub("[REDACTED]", redacted)
-        
+
         return redacted
 
     def strip_code_blocks(self, text: str) -> str:
@@ -72,7 +72,7 @@ class PrivacyFilter:
             return text
 
         # Simple heuristic for code blocks (markdown fences)
-        def replace_block(match):
+        def replace_block(match: re.Match[str]) -> str:
             content = match.group(2)
             lines = content.strip().split("\n")
             if len(lines) > self.max_code_lines:

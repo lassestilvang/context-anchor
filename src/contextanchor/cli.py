@@ -9,20 +9,20 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.theme import Theme
-from rich.live import Live
-from rich.status import Status
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Any, Collection
 
 # Initialize Rich console with custom theme
-custom_theme = Theme({
-    "info": "cyan",
-    "warning": "yellow",
-    "error": "bold red",
-    "success": "bold green",
-    "highlight": "bold magenta",
-    "muted": "grey50"
-})
+custom_theme = Theme(
+    {
+        "info": "cyan",
+        "warning": "yellow",
+        "error": "bold red",
+        "success": "bold green",
+        "highlight": "bold magenta",
+        "muted": "grey50",
+    }
+)
 console = Console(theme=custom_theme)
 
 # Heavy internal modules are lazy-loaded inside commands for faster startup:
@@ -32,24 +32,22 @@ console = Console(theme=custom_theme)
 # - .local_storage (LocalStorage)
 # - .metrics (MetricsCollector)
 # - .logging (get_logger)
-from .errors import ContextAnchorError, NetworkError
 
 
 def _render_context(context_data: dict, output_format: str) -> None:
     if output_format == "json":
-        import json
         console.print_json(data=context_data)
         return
 
     from rich.markdown import Markdown
-    
+
     title = f"[bold success]Context Snapshot:[/bold success] [highlight]{context_data.get('snapshot_id', 'unknown')}[/highlight]"
     meta = f"[muted]Captured:[/muted] {context_data.get('captured_at', 'unknown')} | [muted]Branch:[/muted] {context_data.get('branch', 'unknown')}"
-    
+
     content = f"# Goals\n{context_data.get('goals', 'None specified')}\n\n"
     content += f"# Rationale\n{context_data.get('rationale', 'None specified')}\n\n"
     content += "# Next Steps\n"
-    for step in context_data.get('next_steps', []):
+    for step in context_data.get("next_steps", []):
         content += f"- {step}\n"
 
     console.print(Panel(Markdown(content), title=title, subtitle=meta, border_style="success"))
@@ -75,7 +73,7 @@ def _render_context_list(contexts: list, output_format: str) -> None:
             ctx.get("snapshot_id", "unknown")[:8],
             ctx.get("captured_at", "N/A"),
             ctx.get("branch", "N/A"),
-            ctx.get("developer_intent", "N/A")
+            ctx.get("developer_intent", "N/A"),
         )
 
     console.print(table)
@@ -133,8 +131,9 @@ def _install_git_hook(repo_root: Path, hook_name: str, script_content: str) -> s
 def main(ctx: click.Context) -> None:
     """ContextAnchor: Developer workflow state management system."""
     from .logging import setup_logging
+
     setup_logging()
-    
+
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         return
@@ -145,6 +144,7 @@ def main(ctx: click.Context) -> None:
         if repo_root:
             from .git_observer import GitObserver
             from .local_storage import LocalStorage
+
             git_obs = GitObserver(str(repo_root))
             repo_id = git_obs.generate_repository_id()
             if repo_id:
@@ -175,9 +175,12 @@ def main(ctx: click.Context) -> None:
                     pass
 
                 # Show context as fallback
-                console.print(f"\\n[highlight]🔍 ContextAnchor: Detected switch to branch '{branch}' (fallback)[/highlight]")
+                console.print(
+                    f"\\n[highlight]🔍 ContextAnchor: Detected switch to branch '{branch}' (fallback)[/highlight]"
+                )
                 try:
                     from .metrics import MetricsCollector
+
                     repo_id = git_obs.generate_repository_id() or "unknown"
                     MetricsCollector().emit_event("resume_session_started", repo_id, branch)
                 except Exception:
@@ -206,7 +209,9 @@ def main(ctx: click.Context) -> None:
                             if ctx_list and len(ctx_list) > 0:
                                 _render_context(ctx_list[0], "text")
                             else:
-                                console.print("[warning]No saved context found for this branch.[/warning]")
+                                console.print(
+                                    "[warning]No saved context found for this branch.[/warning]"
+                                )
                         except ConnectionError:
                             local = LocalStorage()
                             cached = local.get_cached_snapshot(repo_id, branch)
@@ -219,38 +224,44 @@ def main(ctx: click.Context) -> None:
                                     c_dict = getattr(cached, "__dict__", {})
                                 _render_context(c_dict, "text")
                             else:
-                                console.print("[warning]No saved context found for this branch.[/warning]")
+                                console.print(
+                                    "[warning]No saved context found for this branch.[/warning]"
+                                )
                 except Exception:
                     pass  # Keep fallback quiet on errors
 
             # Check for first productive action
             try:
                 from .metrics import MetricsCollector
+
                 metrics = MetricsCollector()
                 repo_id = git_obs.generate_repository_id() or "unknown"
-                
+
                 # Get events for this repo/branch
-                events = metrics.get_events(repository_id=repo_id, event_types=["resume_session_started", "first_productive_action"])
-                
+                events = metrics.get_events(
+                    repository_id=repo_id,
+                    event_types=["resume_session_started", "first_productive_action"],
+                )
+
                 # Find if there is a pending session (started but not yet productive)
                 pending_start = None
                 for e in reversed(events):
                     if e["branch"] == branch:
                         if e["event_type"] == "first_productive_action":
                             # Already productive for this session
-                            break 
+                            break
                         if e["event_type"] == "resume_session_started":
                             pending_start = e
                             break
-                
+
                 if pending_start:
                     from datetime import datetime
+
                     start_ts = datetime.fromisoformat(pending_start["timestamp"])
                     if git_obs.has_productive_action_since(start_ts):
                         metrics.emit_event("first_productive_action", repo_id, branch)
             except Exception:
                 pass
-
 
 
 @main.command()
@@ -265,33 +276,34 @@ def init() -> None:
     config_path = config_dir / "config.yaml"
 
     if config_path.exists():
-        console.print("[warning]⚠ ContextAnchor is already initialized in this repository.[/warning]")
+        console.print(
+            "[warning]⚠ ContextAnchor is already initialized in this repository.[/warning]"
+        )
         raise click.Abort()
 
     config_dir.mkdir(exist_ok=True)
 
     from .config import Config, save_config
+
     config = Config(api_endpoint="https://api.contextanchor.example.com")
     save_config(config, config_path)
 
     post_commit_script = "#!/bin/sh\ncontextanchor save-context --hook >/dev/null 2>&1 &\n"
-    post_checkout_script = "#!/bin/sh\ncontextanchor _hook-branch-switch \"$1\" \"$2\" >/dev/tty 2>&1 &\n"
+    post_checkout_script = (
+        '#!/bin/sh\ncontextanchor _hook-branch-switch "$1" "$2" >/dev/tty 2>&1 &\n'
+    )
 
     status_commit = _install_git_hook(repo_root, "post-commit", post_commit_script)
     status_checkout = _install_git_hook(repo_root, "post-checkout", post_checkout_script)
 
     from .git_observer import GitObserver
     from .local_storage import LocalStorage
+
     git_obs = GitObserver(str(repo_root))
     remote_url = git_obs.get_remote_url()
-    repo_id = git_obs.generate_repository_id(remote_url, repo_root) or "unknown"
+    repo_id = git_obs.generate_repository_id(remote_url, str(repo_root)) or "unknown"
     local = LocalStorage()
-    local.register_repository(
-        repo_id,
-        repo_root.name,
-        str(repo_root),
-        remote_url
-    )
+    local.register_repository(repo_id, repo_root.name, str(repo_root), remote_url)
 
     hook_statuses = {
         "post-commit": status_commit,
@@ -350,6 +362,7 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
         click.echo(f"\\n🔍 ContextAnchor: Switched to branch '{branch}'")
         try:
             from .metrics import MetricsCollector
+
             repo_id = git_obs.generate_repository_id() or "unknown"
             MetricsCollector().emit_event("resume_session_started", repo_id, branch)
         except Exception:
@@ -453,14 +466,12 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
 
     intent_str = _redact_secrets(intent, config.redact_patterns)
 
-    from typing import Dict, Any
-
     try:
         signals_dict = dataclasses.asdict(signals)
     except TypeError:
         signals_dict = getattr(signals, "__dict__", {})
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "repository_id": repo_id,
         "branch": branch,
         "developer_intent": intent_str,
@@ -475,6 +486,7 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
     logger = get_logger("cli.save_context")
     client = APIClient(config.api_endpoint, config.retry_attempts, config.api_timeout_seconds)
     from .metrics import MetricsCollector
+
     metrics = MetricsCollector()
     metrics.emit_event("context_capture_started", repo_id, branch)
 
@@ -482,16 +494,24 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
         with console.status("[info]Saving context to cloud...[/info]", spinner="dots"):
             resp = client.create_context(repo_id, branch, intent_str, payload["signals"])
             snapshot_id = resp.get("snapshot_id", "unknown")
-        
-        console.print(f"[success]✅ Context snapshot saved successfully.[/success] [muted](ID: {snapshot_id})[/muted]")
-        metrics.emit_event("context_capture_completed", repo_id, branch, {"snapshot_id": snapshot_id})
+
+        console.print(
+            f"[success]✅ Context snapshot saved successfully.[/success] [muted](ID: {snapshot_id})[/muted]"
+        )
+        metrics.emit_event(
+            "context_capture_completed", repo_id, branch, {"snapshot_id": snapshot_id}
+        )
         logger.info(f"Context saved: {snapshot_id} for branch {branch}")
     except (NetworkError, ConnectionError) as e:
         logger.warning(f"Network error during save: {e}. Queueing operation.")
         local = LocalStorage()
         op_id = local.queue_operation("save_context", repo_id, payload)
-        console.print(f"[warning]⚠ Network unavailable. Queued operation for later.[/warning] [muted](Op ID: {op_id})[/muted]")
-        metrics.emit_event("context_capture_failed", repo_id, branch, {"error": "NetworkError", "queued": True})
+        console.print(
+            f"[warning]⚠ Network unavailable. Queued operation for later.[/warning] [muted](Op ID: {op_id})[/muted]"
+        )
+        metrics.emit_event(
+            "context_capture_failed", repo_id, branch, {"error": "NetworkError", "queued": True}
+        )
     except ContextAnchorError as e:
         logger.error(f"ContextAnchor error: {e}")
         console.print(f"[error]❌ Error:[/error] {e}")
@@ -546,7 +566,11 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
     client = APIClient(config.api_endpoint, config.retry_attempts, config.api_timeout_seconds)
 
     if output_format != "json":
-        status_msg = f"[info]Fetching snapshot {snapshot_id}...[/info]" if snapshot_id else f"[info]Listing recent {limit} snapshots for {repo_id}/{branch}...[/info]"
+        status_msg = (
+            f"[info]Fetching snapshot {snapshot_id}...[/info]"
+            if snapshot_id
+            else f"[info]Listing recent {limit} snapshots for {repo_id}/{branch}...[/info]"
+        )
     else:
         status_msg = ""
 
@@ -556,6 +580,7 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
 
     logger = get_logger("cli.show_context")
     from .metrics import MetricsCollector
+
     metrics = MetricsCollector()
     try:
         if status_msg:
@@ -576,7 +601,11 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
             logger.info(f"Context restored: {snapshot_id}")
         else:
             _render_context_list(
-                context_data.get("contexts", context_data) if isinstance(context_data, dict) else context_data,
+                (
+                    context_data.get("contexts", context_data)
+                    if isinstance(context_data, dict)
+                    else context_data
+                ),
                 output_format,
             )
     except (NetworkError, ConnectionError) as e:
@@ -587,12 +616,18 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
             cached = local.get_cached_snapshot(repo_id, branch)
             if cached:
                 import dataclasses
+
                 try:
                     c_dict = dataclasses.asdict(cached)
                 except TypeError:
                     c_dict = getattr(cached, "__dict__", {})
                 _render_context(c_dict, output_format)
-                metrics.emit_event("context_restored", repo_id, branch, {"snapshot_id": c_dict.get("snapshot_id"), "cache": True})
+                metrics.emit_event(
+                    "context_restored",
+                    repo_id,
+                    branch,
+                    {"snapshot_id": c_dict.get("snapshot_id"), "cache": True},
+                )
                 logger.info("Restored latest context from local cache.")
             else:
                 logger.info("No cached context found.")
@@ -600,8 +635,12 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
                 metrics.emit_event("context_restore_failed", repo_id, branch, {"error": "No cache"})
         else:
             logger.error(f"Cannot fetch historical snapshot {snapshot_id} while offline.")
-            console.print(f"[error]❌ Cannot fetch specific historical snapshots while offline.[/error]")
-            metrics.emit_event("context_restore_failed", repo_id, branch, {"error": "Network unavailable"})
+            console.print(
+                "[error]❌ Cannot fetch specific historical snapshots while offline.[/error]"
+            )
+            metrics.emit_event(
+                "context_restore_failed", repo_id, branch, {"error": "Network unavailable"}
+            )
     except ContextAnchorError as e:
         logger.error(f"ContextAnchor error: {e}")
         console.print(f"[error]❌ Error:[/error] {e}")
@@ -612,29 +651,25 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
         metrics.emit_event("context_restore_failed", repo_id, branch, {"error": "UnexpectedError"})
 
 
-
 @main.command(name="list-repositories")
 def list_repositories() -> None:
     """List all registered repositories."""
+    from .local_storage import LocalStorage
     local = LocalStorage()
     repos = local.list_repositories()
-    
+
     if not repos:
         console.print("[info]No repositories registered yet.[/info]")
         return
-        
+
     table = Table(title="Registered Repositories")
     table.add_column("Name", style="success")
     table.add_column("Root Path", style="muted")
     table.add_column("Last Accessed", style="info")
-    
+
     for repo in repos:
-        table.add_row(
-            repo["name"],
-            repo["root_path"],
-            repo["last_accessed_at"]
-        )
-    
+        table.add_row(repo["name"], repo["root_path"], repo["last_accessed_at"])
+
     console.print(table)
 
 
@@ -665,6 +700,7 @@ def list_contexts(limit: int, output_format: str) -> None:
 
     from .errors import ContextAnchorError, NetworkError
     from .logging import get_logger
+
     logger = get_logger("cli.list_contexts")
 
     try:
@@ -714,10 +750,13 @@ def history(branch: Optional[str], limit: int, output_format: str) -> None:
 
     from .errors import ContextAnchorError, NetworkError
     from .logging import get_logger
+
     logger = get_logger("cli.history")
 
     try:
-        with console.status(f"[info]Fetching history for {target_branch}...[/info]", spinner="dots"):
+        with console.status(
+            f"[info]Fetching history for {target_branch}...[/info]", spinner="dots"
+        ):
             contexts = client.list_contexts(repo_id, target_branch, limit)
         _render_context_list(
             contexts.get("contexts", contexts) if isinstance(contexts, dict) else contexts,
@@ -751,11 +790,14 @@ def delete_context(snapshot_id: str) -> None:
 
     from .errors import ContextAnchorError, NetworkError
     from .logging import get_logger
+
     logger = get_logger("cli.delete_context")
 
     try:
         client.delete_context(snapshot_id)
-        console.print(f"[success]✅ Context snapshot {snapshot_id} marked for deletion.[/success] [muted](purge 24h)[/muted]")
+        console.print(
+            f"[success]✅ Context snapshot {snapshot_id} marked for deletion.[/success] [muted](purge 24h)[/muted]"
+        )
         logger.info(f"Context deleted: {snapshot_id}")
     except NetworkError as e:
         logger.error(f"Network error in delete_context: {e}")
@@ -786,4 +828,3 @@ def export_metrics(format: str) -> None:
         console.print_json(data)
     else:
         console.print(data)
-

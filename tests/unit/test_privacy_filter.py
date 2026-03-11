@@ -1,5 +1,5 @@
-import pytest
 from src.contextanchor.privacy import PrivacyFilter
+
 
 def test_redact_secrets_aws():
     filter = PrivacyFilter()
@@ -10,7 +10,8 @@ def test_redact_secrets_aws():
     redacted = filter.redact_secrets(text)
     assert aws_key not in redacted
     assert "[REDACTED]" in redacted
-    assert "SECRET_ACCESS_KEY" in redacted # key name remains, value redacted
+    assert "SECRET_ACCESS_KEY" in redacted  # key name remains, value redacted
+
 
 def test_redact_secrets_github():
     filter = PrivacyFilter()
@@ -20,6 +21,7 @@ def test_redact_secrets_github():
     assert "ghp_" not in redacted
     assert "[REDACTED]" in redacted
 
+
 def test_redact_secrets_stripe():
     filter = PrivacyFilter()
     stripe_key = "sk_test_" + "X" * 24
@@ -27,6 +29,7 @@ def test_redact_secrets_stripe():
     redacted = filter.redact_secrets(text)
     assert "sk_test_" not in redacted
     assert "[REDACTED]" in redacted
+
 
 def test_redact_generic_secrets():
     filter = PrivacyFilter()
@@ -37,6 +40,7 @@ def test_redact_generic_secrets():
     assert secret_val not in redacted
     assert password_val not in redacted
     assert "[REDACTED]" in redacted
+
 
 def test_strip_large_code_blocks():
     # Set max lines to 2 for testing
@@ -57,6 +61,7 @@ End of code.
     assert "```python" in processed
     assert "```" in processed
 
+
 def test_allow_small_code_blocks():
     filter = PrivacyFilter(redact_code=True, max_code_lines=5)
     text = """
@@ -68,6 +73,7 @@ def short():
     processed = filter.strip_code_blocks(text)
     assert "def short():" in processed
     assert "stripped" not in processed
+
 
 def test_privacy_filter_apply():
     filter = PrivacyFilter(max_code_lines=1)

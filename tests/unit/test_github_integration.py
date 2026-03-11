@@ -4,7 +4,6 @@ Unit tests for GitHub Integration component.
 Tests the parsing of GitHub remote URLs, PR references, and issue references.
 """
 
-
 from src.contextanchor.github_integration import GitHubIntegration
 from src.contextanchor.models import GitHubRepo
 

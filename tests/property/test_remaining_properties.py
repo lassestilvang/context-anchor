@@ -12,29 +12,24 @@ Properties tested:
 - Property 86: Configuration File Support
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
-from hypothesis import given, settings, assume
+from unittest.mock import Mock
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from click.testing import CliRunner
 
 from src.contextanchor.models import (
-    ContextSnapshot,
     Config,
     Repository,
-    ACTION_VERBS,
 )
 from src.contextanchor.context_store import ContextStore
 from tests.property.strategies import (
     valid_context_snapshot,
     valid_repository_id,
-    valid_branch_name,
-    valid_capture_signals,
 )
 
-
 # --- Property 13: Retention Period Enforcement ---
+
 
 @settings(max_examples=100)
 @given(
@@ -57,8 +52,7 @@ def test_property_13_retention_period_enforcement(retention_days, age_days):
 
     if age_days > retention_days:
         assert is_expired, (
-            f"Snapshot aged {age_days} days must be expired with "
-            f"{retention_days} day retention"
+            f"Snapshot aged {age_days} days must be expired with " f"{retention_days} day retention"
         )
     elif age_days < retention_days:
         assert not is_expired, (
@@ -68,6 +62,7 @@ def test_property_13_retention_period_enforcement(retention_days, age_days):
 
 
 # --- Property 22: Initialization Failure Error Messages ---
+
 
 @settings(max_examples=50)
 @given(
@@ -88,9 +83,7 @@ def test_property_22_initialization_failure_error_messages(path):
     try:
         root = observer.detect_repository_root()
         # If it returns, it must be None for non-git dirs
-        assert root is None, (
-            "detect_repository_root should return None for non-git directories"
-        )
+        assert root is None, "detect_repository_root should return None for non-git directories"
     except (gitmodule.exc.InvalidGitRepositoryError, gitmodule.exc.NoSuchPathError) as e:
         # Exception is acceptable, but must have a descriptive message
         assert str(e), "Git error message must not be empty"
@@ -98,6 +91,7 @@ def test_property_22_initialization_failure_error_messages(path):
 
 
 # --- Property 23: Hook Status Reporting ---
+
 
 @settings(max_examples=50)
 @given(
@@ -123,12 +117,13 @@ def test_property_23_hook_status_reporting(status, repo_id):
         hook_status=status,
     )
 
-    assert repo.hook_status in valid_statuses, (
-        f"hook_status must be one of {valid_statuses}, got '{repo.hook_status}'"
-    )
+    assert (
+        repo.hook_status in valid_statuses
+    ), f"hook_status must be one of {valid_statuses}, got '{repo.hook_status}'"
 
 
 # --- Property 52: Productive Action Timestamp Recording ---
+
 
 @settings(max_examples=100)
 @given(snapshot=valid_context_snapshot())
@@ -141,19 +136,13 @@ def test_property_52_productive_action_timestamp_recording(snapshot):
     represents when the productive action was recorded. The timestamp
     must be a valid datetime.
     """
-    assert isinstance(snapshot.captured_at, datetime), (
-        "captured_at must be a datetime instance"
-    )
+    assert isinstance(snapshot.captured_at, datetime), "captured_at must be a datetime instance"
     # Timestamp must be in a reasonable range
-    assert snapshot.captured_at >= datetime(2020, 1, 1), (
-        "captured_at must be after 2020-01-01"
-    )
+    assert snapshot.captured_at >= datetime(2020, 1, 1), "captured_at must be after 2020-01-01"
     # ISO format must be parseable
     iso = snapshot.captured_at.isoformat()
     parsed = datetime.fromisoformat(iso)
-    assert parsed == snapshot.captured_at, (
-        "captured_at must survive ISO format round trip"
-    )
+    assert parsed == snapshot.captured_at, "captured_at must survive ISO format round trip"
 
 
 # --- Property 62-66: Command Availability ---
@@ -189,6 +178,7 @@ def test_property_62_66_command_availability(cmd):
 
 # --- Property 73: history Command Availability ---
 
+
 def test_property_73_history_command_availability():
     """
     Property 73: history Command Availability
@@ -201,15 +191,16 @@ def test_property_73_history_command_availability():
     runner = CliRunner()
     result = runner.invoke(main, ["history", "--help"])
 
-    assert result.exit_code == 0, (
-        f"'history' command must be available. Exit code: {result.exit_code}"
-    )
-    assert "history" in result.output.lower() or "usage" in result.output.lower(), (
-        "'history' help must contain relevant information"
-    )
+    assert (
+        result.exit_code == 0
+    ), f"'history' command must be available. Exit code: {result.exit_code}"
+    assert (
+        "history" in result.output.lower() or "usage" in result.output.lower()
+    ), "'history' help must contain relevant information"
 
 
 # --- Property 74: Timestamped Historical Snapshot Retrieval ---
+
 
 @settings(max_examples=50)
 @given(snapshot=valid_context_snapshot())
@@ -233,12 +224,13 @@ def test_property_74_timestamped_historical_snapshot_retrieval(snapshot):
 
     # Verify timestamp is stored correctly
     assert "captured_at" in stored_item, "captured_at must be stored"
-    assert stored_item["captured_at"] == snapshot.captured_at.isoformat(), (
-        "captured_at must be stored as ISO format string"
-    )
+    assert (
+        stored_item["captured_at"] == snapshot.captured_at.isoformat()
+    ), "captured_at must be stored as ISO format string"
 
 
 # --- Property 86: Configuration File Support ---
+
 
 @settings(max_examples=50)
 @given(
