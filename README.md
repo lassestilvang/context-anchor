@@ -13,6 +13,7 @@ ContextAnchor monitors git activity and enables developers to capture their ment
 - **AI Synthesis**: Uses Amazon Bedrock to transform raw signals into structured context snapshots
 - **Automatic Restoration**: Surfaces saved context when returning to branches or projects
 - **Offline Resilient**: Core functionality works without network connectivity
+- **Manual Synchronization**: Explicit `sync` command to push queued offline operations
 
 ## Architecture
 

@@ -860,162 +860,162 @@ The system consists of:
 - Developer-scoped access is partially implemented but not consistently enforced in the deployed retrieval/list handlers.
 - Documentation claims (TLS 1.3 enforcement, auto-retry behavior, delete retention windows, CLI options) are not fully aligned with implementation.
 
-- [ ] 35. Resolve API authentication and endpoint contract mismatches
-  - [ ] 35.1 Standardize API authentication between CLI and API Gateway
+- [x] 35. Resolve API authentication and endpoint contract mismatches
+  - [x] 35.1 Standardize API authentication between CLI and API Gateway
     - Decide canonical auth contract (`x-api-key`, `Authorization`, or both with clear precedence)
     - Update APIClient request header construction to match deployed gateway requirements
     - Add explicit CLI/config validation for missing or malformed credentials
     - Improve 401/403 error messages with actionable remediation hints
     - _Requirements: 6.3, 8.4, 9.3, 14.4_
 
-  - [ ] 35.2 Normalize API endpoint base URL semantics
+  - [x] 35.2 Normalize API endpoint base URL semantics
     - Define canonical `api_endpoint` format in config (with or without `/v1` suffix)
     - Update API client URL join logic to prevent duplicate path segments
     - Update `init` default configuration template to match canonical format
     - _Requirements: 6.1, 6.2, 15.1, 15.5_
 
-  - [ ] 35.3 Add contract tests for authentication and URL construction
+  - [x] 35.3 Add contract tests for authentication and URL construction
     - Add unit tests for header behavior across all API methods
     - Add unit tests for endpoint normalization edge cases (`/`, `/v1`, `/prod/v1`)
     - Add integration test to verify successful authenticated request against deployed API route shape
     - _Requirements: 6.3, 8.4, 14.4_
 
-- [ ] 36. Fix list/history/restoration response schema drift
-  - [ ] 36.1 Define and enforce canonical API list response schema
+- [x] 36. Fix list/history/restoration response schema drift
+  - [x] 36.1 Define and enforce canonical API list response schema
     - Choose a single response key for collections (`snapshots` or `contexts`) and enforce it everywhere
     - Align Lambda handlers and any shared handler module with the same response structure
     - Ensure pagination fields (`count`, `next_token`) are consistently present when applicable
     - _Requirements: 5.1, 12.1, 12.5, 12.6_
 
-  - [ ] 36.2 Update CLI parsing and rendering for the canonical schema
+  - [x] 36.2 Update CLI parsing and rendering for the canonical schema
     - Update `show-context`, `list-contexts`, `history`, and branch-switch restoration paths
     - Ensure fallback logic handles legacy payloads for backward compatibility during migration
     - Replace missing `developer_intent` rendering with stable summary fields when unavailable
     - _Requirements: 5.2, 5.3, 5.8, 12.2, 12.3_
 
-  - [ ] 36.3 Add regression tests for collection responses
+  - [x] 36.3 Add regression tests for collection responses
     - Add unit tests for list/history/show parsing with both canonical and legacy payloads
     - Add integration tests for branch switch auto-restore using canonical list responses
     - _Requirements: 5.6, 5.7, 12.1, 12.6_
 
-- [ ] 37. Complete offline replay and local cache reliability
-  - [ ] 37.1 Implement automatic queued operation replay
+- [x] 37. Complete offline replay and local cache reliability
+  - [x] 37.1 Implement automatic queued operation replay
     - Add queue draining on command startup or dedicated sync lifecycle hook
     - Execute pending operations with exponential backoff and retry bookkeeping
     - Mark successful operations complete and clean expired operations
     - _Requirements: 8.1, 8.4, 8.7, 8.8_
 
-  - [ ] 37.2 Enforce offline queue limits and eviction behavior
+  - [x] 37.2 Enforce offline queue limits and eviction behavior
     - Apply `offline_queue_max` setting to prevent unbounded queue growth
     - Define deterministic queue eviction policy with logging and metrics
     - _Requirements: 8.6, 15.3, 15.4_
 
-  - [ ] 37.3 Implement snapshot cache write-through and restore parity
+  - [x] 37.3 Implement snapshot cache write-through and restore parity
     - Cache snapshots after successful save/retrieve operations
     - Ensure offline restore path can render latest cached snapshot reliably
     - Add cache invalidation behavior after delete-context operations
     - _Requirements: 5.2, 5.8, 8.1, 8.4_
 
-  - [ ] 37.4 Add offline sync integration tests
+  - [x] 37.4 Add offline sync integration tests
     - Validate queue replay after connectivity restoration
     - Validate backoff timing and retry_count progression
     - Validate cached snapshot restoration when network is unavailable
     - _Requirements: 8.1, 8.4, 8.7, 8.8_
 
-  - [ ] 37.5 Implement manual `sync` command
+  - [x] 37.5 Implement manual `sync` command
     - Provide a dedicated `contextanchor sync` command to force queue draining
     - Display a progress bar or summary of synced/pending operations
     - _Requirements: 8.4, 13.5_
 
-- [ ] 38. Wire GitHub enrichment through capture and restore flow
-  - [ ] 38.1 Populate PR and issue references during signal capture
+- [x] 38. Wire GitHub enrichment through capture and restore flow
+  - [x] 38.1 Populate PR and issue references during signal capture
     - Parse commit messages and branch metadata for PR/issue references
     - Populate `pr_references` and `issue_references` in `CaptureSignals`
     - _Requirements: 1.4, 10.2, 10.3_
 
-  - [ ] 38.2 Persist GitHub repository metadata with captured context
+  - [x] 38.2 Persist GitHub repository metadata with captured context
     - Derive owner/repo from remote URL where available
     - Store sufficient metadata to generate stable links at restore time
     - _Requirements: 10.1, 10.6_
 
-  - [ ] 38.3 Restore and display GitHub links in context output
+  - [x] 38.3 Restore and display GitHub links in context output
     - Include PR and issue links in `show-context` and branch auto-restore output
     - Ensure text/json/markdown outputs include consistent GitHub metadata fields
     - _Requirements: 5.3, 5.4, 10.4, 10.6_
 
-  - [ ] 38.4 Add tests for end-to-end GitHub enrichment
+  - [x] 38.4 Add tests for end-to-end GitHub enrichment
     - Add property/unit tests for parsing and link generation in full capture flow
     - Add integration test validating stored links appear on restoration
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.6_
 
-  - [ ] 38.5 Harden commit and metadata parsing patterns
+  - [x] 38.5 Harden commit and metadata parsing patterns
     - Implement robust regex for various PR/Issue mention styles (e.g., `#123`, `closes #456`, `PR 789`)
     - Test parsing against diverse commit message samples
     - _Requirements: 1.4, 10.2_
 
-- [ ] 39. Consolidate backend runtime paths and developer scoping
-  - [ ] 39.1 Choose a single canonical backend handler implementation
+- [x] 39. Consolidate backend runtime paths and developer scoping
+  - [x] 39.1 Choose a single canonical backend handler implementation
     - Decide whether `lambda/*.py` or `src/contextanchor/handlers.py` is authoritative (Recommended: `src/contextanchor/handlers.py`)
     - Consolidate business logic in the authoritative module; use the other for thin deployment wrappers
     - Remove duplicate logic or generate one from shared implementation to prevent drift
     - Align deployment wiring with the canonical implementation
     - _Requirements: 14.3, 14.4_
 
-  - [ ] 39.2 Enforce developer-scoped retrieval/listing in deployed handlers
+  - [x] 39.2 Enforce developer-scoped retrieval/listing in deployed handlers
     - Ensure developer filters are supported and applied consistently in retrieval/list endpoints
     - Ensure CLI passes explicit `developer_id` in requests where required
     - _Requirements: 9.3, 12.1, 12.6_
 
-  - [ ] 39.3 Align async capture behavior and response semantics
+  - [x] 39.3 Align async capture behavior and response semantics
     - Define canonical capture response (`processing` vs immediate complete) and document it
     - Ensure CLI acknowledgement/metrics behavior matches backend processing model
     - _Requirements: 13.4, 16.1, 16.2_
 
-  - [ ] 39.4 Add deployment outputs for API endpoint and credentials guidance
+  - [x] 39.4 Add deployment outputs for API endpoint and credentials guidance
     - Add CDK outputs for API URL and setup hints for API key retrieval
     - Align installation steps with actual output values
     - _Requirements: 7.1, 14.4_
 
-- [ ] 40. Reconcile security, retention, and operational claims with implementation
-  - [ ] 40.1 Align TLS guarantees across code, infrastructure, and docs
+- [x] 40. Reconcile security, retention, and operational claims with implementation
+  - [x] 40.1 Align TLS guarantees across code, infrastructure, and docs
     - Set technically enforceable minimum TLS policy in infra where supported
     - Align API client TLS minimum to documented policy
     - Update documentation if TLS 1.3 cannot be strictly enforced end-to-end
     - _Requirements: 9.2_
 
-  - [ ] 40.2 Align retention and deletion semantics across CLI, store, and docs
+  - [x] 40.2 Align retention and deletion semantics across CLI, store, and docs
     - Ensure retention days and purge-after-delete values are consistent in code and docs
     - Ensure delete-context CLI messaging reflects real purge window
     - _Requirements: 4.4, 4.6, 6.6, 9.4, 15.3_
 
-  - [ ] 40.3 Harden cost guardrails and observability configuration
+  - [x] 40.3 Harden cost guardrails and observability configuration
     - Fix alarm dimensions/metrics so CloudWatch alarms evaluate real workload signals
     - Validate budget filters/tags match deployed resources
     - _Requirements: 14.5, 14.6_
 
-  - [ ] 40.4 Reduce runtime warnings and deprecated patterns
+  - [x] 40.4 Reduce runtime warnings and deprecated patterns
     - Replace deprecated UTC time calls with timezone-aware alternatives
     - Eliminate unclosed SQLite connection warnings in tests and runtime paths
     - _Requirements: 8.5, 13.1_
 
-- [ ] 41. Refresh documentation and acceptance criteria for MVP correctness
-  - [ ] 41.1 Update user docs to match actual command behavior
+- [x] 41. Refresh documentation and acceptance criteria for MVP correctness
+  - [x] 41.1 Update user docs to match actual command behavior
     - Correct CLI option docs for `show-context`, `history`, `delete-context`, and restore behavior
     - Correct endpoint/auth configuration instructions
     - _Requirements: 6.1, 6.2, 6.4, 7.1, 12.2, 15.1_
 
-  - [ ] 41.2 Update architecture docs for implemented privacy/offline behavior
+  - [x] 41.2 Update architecture docs for implemented privacy/offline behavior
     - Document what is actually redacted locally vs server-side
     - Document current offline replay/cache behavior after remediation
     - Document developer scoping behavior and constraints
     - _Requirements: 8.1, 9.3, 9.5, 9.6_
 
-  - [ ] 41.3 Add acceptance checklist for spec-phase completion
+  - [x] 41.3 Add acceptance checklist for spec-phase completion
     - Define measurable acceptance checks for Phase 1-4 outcomes
     - Tie each acceptance check to automated tests where possible
     - _Requirements: All_
 
-- [ ] 42. Remediation checkpoint - Ensure post-audit tasks pass
+- [x] 42. Remediation checkpoint - Ensure post-audit tasks pass
   - Run full unit, property, and integration suites after remediation changes
   - Run lint/type/security checks and fix all issues
   - Re-run end-to-end manual workflow against deployed test environment

@@ -12,7 +12,10 @@ When you deploy the backend using the provided scripts, the following AWS resour
 - **GetContextFunction**: Retrieves a specific snapshot by ID.
 - **ListContextsFunction**: Handles repository-wide and branch-specific listing.
 - **DeleteContextFunction**: Performs soft-deletion of snapshots.
-- **HealthCheckFunction**: Provides system status monitoring.
+- **HealthCheck**: Provides system status monitoring.
+
+> [!NOTE]
+> All Lambda functions are standardized to use unified entry points via the `contextanchor.handlers` package, ensuring consistent logic and security enforcement across all endpoints.
 
 ### 2. Database (Amazon DynamoDB)
 - **ContextSnapshotsTable**: Stores all context data.
