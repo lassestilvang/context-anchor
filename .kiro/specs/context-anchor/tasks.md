@@ -704,34 +704,34 @@ The system consists of:
     - **Property 86: Configuration File Support**
     - **Validates: Requirements 4.4, 6.1, 6.2, 6.3, 6.6, 7.5, 7.6, 12.2, 12.4, 15.1, 16.3**
 
-- [~] 28. Write integration tests
-  - [~] 28.1 Create end-to-end capture flow test
+- [x] 28. Write integration tests
+  - [x] 28.1 Create end-to-end capture flow test
     - Test full flow: init → save-context → verify storage
     - Use temporary git repository
     - Mock AWS services with moto
     - Verify all components work together
     - _Requirements: 2.1, 2.2, 2.3, 3.1, 4.1_
 
-  - [~] 28.2 Create end-to-end restoration flow test
+  - [x] 28.2 Create end-to-end restoration flow test
     - Test full flow: save-context → switch branch → restore context
     - Verify automatic restoration triggers
     - Verify context display formatting
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.6_
 
-  - [~] 28.3 Create offline sync flow test
+  - [x] 28.3 Create offline sync flow test
     - Test save-context while offline
     - Verify local queueing
     - Simulate connectivity restoration
     - Verify sync with exponential backoff
     - _Requirements: 8.1, 8.4, 8.7_
 
-  - [~] 28.4 Create multi-repository integration test
+  - [x] 28.4 Create multi-repository integration test
     - Initialize multiple repositories
     - Save contexts in each repository
     - Verify isolation between repositories
     - _Requirements: 11.1, 11.2, 11.3_
 
-- [~] 29. Checkpoint - Ensure all tests pass
+- [x] 29. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 

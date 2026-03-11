@@ -13,7 +13,7 @@ def api_client():
 
 
 def test_create_context_success(api_client):
-    with patch("requests.request") as mock_request:
+    with patch("requests.Session.request") as mock_request:
         mock_response = MagicMock()
         mock_response.status_code = 201
         mock_response.json.return_value = {
@@ -33,7 +33,7 @@ def test_create_context_success(api_client):
 
 
 def test_api_client_timeout_retry(api_client):
-    with patch("requests.request") as mock_request:
+    with patch("requests.Session.request") as mock_request:
         with patch("time.sleep") as mock_sleep:
             # First two fail with timeout, third succeeds
             mock_response = MagicMock()
@@ -54,7 +54,7 @@ def test_api_client_timeout_retry(api_client):
 
 
 def test_api_client_timeout_failure(api_client):
-    with patch("requests.request") as mock_request:
+    with patch("requests.Session.request") as mock_request:
         with patch("time.sleep"):
             # All fail with timeout
             mock_request.side_effect = requests.exceptions.Timeout("Timeout")
@@ -66,7 +66,7 @@ def test_api_client_timeout_failure(api_client):
 
 
 def test_api_client_http_error_no_retry_400(api_client):
-    with patch("requests.request") as mock_request:
+    with patch("requests.Session.request") as mock_request:
         mock_response = MagicMock()
         mock_response.status_code = 400
         mock_response.text = "Bad Request"
@@ -82,7 +82,7 @@ def test_api_client_http_error_no_retry_400(api_client):
 
 
 def test_list_contexts(api_client):
-    with patch("requests.request") as mock_request:
+    with patch("requests.Session.request") as mock_request:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"snapshots": []}
