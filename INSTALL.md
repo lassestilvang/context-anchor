@@ -2,6 +2,39 @@
 
 ContextAnchor is composed of a Command Line Interface (CLI) tool and an AWS Serverless backend. This guide covers how to set up both parts.
 
+## Backend Infrastructure (AWS Resources)
+
+When you deploy the backend using the provided scripts, the following AWS resources will be provisioned in your account:
+
+### 1. Compute (AWS Lambda)
+- **CaptureContextFunction**: Processes Git signals and developer intent using Amazon Bedrock.
+- **GetLatestContextFunction**: Retrieves the most recent snapshot for a branch.
+- **GetContextFunction**: Retrieves a specific snapshot by ID.
+- **ListContextsFunction**: Handles repository-wide and branch-specific listing.
+- **DeleteContextFunction**: Performs soft-deletion of snapshots.
+- **HealthCheckFunction**: Provides system status monitoring.
+
+### 2. Database (Amazon DynamoDB)
+- **ContextSnapshotsTable**: Stores all context data.
+  - **Partition Key**: `PK` (REPO#<id>)
+  - **Sort Key**: `SK` (BRANCH#<name>#TS#<timestamp>)
+  - **Global Secondary Indexes**: `BySnapshotId`, `ByDeveloper` for efficient lookups.
+  - **Encryption**: AES-256 at rest.
+  - **TTL**: Automatically purges items older than 90 days.
+
+### 3. API & Security (Amazon API Gateway)
+- **REST API**: A regional endpoint providing the secure interface for the CLI.
+- **API Key**: Required for all authenticated requests.
+- **Usage Plan**: Configured with rate limiting and throttling to stay within free tier limits.
+- **TLS 1.3**: Enforced for all data in transit.
+
+### 4. Storage & Monitoring
+- **Amazon S3**: For application logs and infrastructure artifacts.
+- **CloudWatch Logs**: Centralized logging for all Lambda functions.
+- **AWS Budgets**: Configured with a $5/month threshold to prevent unexpected costs.
+
+---
+
 ## Prerequisites
 
 ### For the CLI

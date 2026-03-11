@@ -14,6 +14,19 @@ ContextAnchor monitors git activity and enables developers to capture their ment
 - **Automatic Restoration**: Surfaces saved context when returning to branches or projects
 - **Offline Resilient**: Core functionality works without network connectivity
 
+## Architecture
+
+ContextAnchor consists of a Python CLI and a serverless AWS backend.
+
+### Cloud Resources (AWS)
+The backend is deployed via AWS CDK and includes:
+- **AWS Lambda**: Serverless functions for context synthesis and retrieval.
+- **Amazon DynamoDB**: Encrypted, high-performance NoSQL storage.
+- **Amazon Bedrock**: Powering AI-driven context synthesis.
+- **Amazon API Gateway**: Secure, authenticated REST API.
+
+See [INSTALL.md](INSTALL.md) for a detailed list of provisioned resources and setup instructions.
+
 ## Requirements
 
 - Python 3.11 or higher
