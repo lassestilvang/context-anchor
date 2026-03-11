@@ -32,7 +32,10 @@ class APIClient:
         self.api_key = self._load_api_key()
         self.session = requests.Session()
         # Enforce TLS 1.2+ for security (TLS 1.3 preferred)
-        self.session.mount("https://", TLSAdapter(min_tls_version=ssl.TLSVersion.TLSv1_2))
+        min_tls = ssl.TLSVersion.TLSv1_2
+        if hasattr(ssl, "TLSVersion") and hasattr(ssl.TLSVersion, "TLSv1_3"):
+            min_tls = ssl.TLSVersion.TLSv1_3
+        self.session.mount("https://", TLSAdapter(min_tls_version=min_tls))
 
     def _load_api_key(self) -> str:
         """Load API key from credentials file."""
@@ -45,9 +48,18 @@ class APIClient:
 
     def _request(self, method: str, path: str, **kwargs: Any) -> Dict[str, Any]:
         """Execute HTTP request with retries and exponential backoff."""
-        url = f"{self.endpoint}{path}"
+        # Normalize path - ensure single leading slash and no redundant /v1 if endpoint already has it
+        clean_path = path.lstrip("/")
+        if self.endpoint.endswith("/v1") and clean_path.startswith("v1/"):
+            clean_path = clean_path[3:]
+        
+        url = f"{self.endpoint}/{clean_path}"
+        
         headers = kwargs.pop("headers", {})
         if self.api_key:
+            # API Gateway specifically looks for X-API-Key
+            headers["X-API-Key"] = self.api_key
+            # Fallback for other potential auth mechanisms
             headers["Authorization"] = f"Bearer {self.api_key}"
 
         for attempt in range(self.retry_attempts + 1):
