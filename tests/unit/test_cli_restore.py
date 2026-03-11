@@ -15,6 +15,7 @@ def mock_restore_deps():
         patch("src.contextanchor.config.load_config") as mock_load_config,
         patch("pathlib.Path.exists", return_value=True),
         patch("builtins.open") as mock_open,
+        patch("src.contextanchor.logging.get_logger") as mock_get_logger,
     ):
         mock_find_git.return_value = Path("/mock/repo")
 
@@ -56,7 +57,7 @@ def test_fallback_branch_detection(mock_restore_deps):
     # It should fetch and render context
     assert "Context Snapshot: snap-555" in result.output
     # It should also run the list-contexts command (which prints a list)
-    assert "Recent Contexts (1):" in result.output
+    assert "Recent Contexts (1)" in result.output
 
 def test_hook_branch_switch_command(mock_restore_deps):
     runner = CliRunner()

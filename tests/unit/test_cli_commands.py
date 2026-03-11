@@ -50,7 +50,7 @@ def test_list_contexts(mock_cmd_deps):
     runner = CliRunner()
     result = runner.invoke(list_contexts, ["-l", "5"])
     assert result.exit_code == 0
-    assert "Recent Contexts (2):" in result.output
+    assert "Recent Contexts (2)" in result.output
     mock_cmd_deps["api_client"].list_contexts.assert_called_with("repo1", None, 5)
 
 
@@ -58,7 +58,7 @@ def test_history(mock_cmd_deps):
     runner = CliRunner()
     result = runner.invoke(history, ["-b", "feature-x", "-l", "10"])
     assert result.exit_code == 0
-    assert "Recent Contexts (2):" in result.output
+    assert "Recent Contexts (2)" in result.output
     mock_cmd_deps["api_client"].list_contexts.assert_called_with("repo1", "feature-x", 10)
 
 

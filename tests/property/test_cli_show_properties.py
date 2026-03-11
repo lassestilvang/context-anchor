@@ -25,14 +25,22 @@ def test_property_render_correctness(snapshot_id, goals, rationale, next_steps):
         "next_steps": next_steps,
     }
 
-    with patch("src.contextanchor.cli.click.echo") as mock_echo:
+    with patch("src.contextanchor.cli.console.print") as mock_print:
         _render_context(context_data, "text")
 
-        # Gather all echoed strings
-        output = "\\n".join(str(c[0][0]) for c in mock_echo.call_args_list if c[0])
+    with patch("src.contextanchor.cli.console.print") as mock_print:
+        _render_context(context_data, "text")
 
-        assert snapshot_id in output
-        assert goals in output
-        assert rationale in output
+        # The first call to print should be our Panel
+        panel = mock_print.call_args_list[0].args[0]
+        
+        # Check title/subtitle for snapshot_id
+        assert snapshot_id in panel.title
+        
+        # Check Markdown content for goals, rationale, next_steps
+        markdown_obj = panel.renderable
+        # In rich, Markdown object stores its source in .markup attribute
+        assert goals in markdown_obj.markup
+        assert rationale in markdown_obj.markup
         for step in next_steps:
-            assert step in output
+             assert step in markdown_obj.markup

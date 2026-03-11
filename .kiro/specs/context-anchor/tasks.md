@@ -616,14 +616,14 @@ The system consists of:
     - **Validates: Requirements 6.4, 6.5, 13.5, 11.5**
     - **Validates: Requirements 6.4, 6.5, 11.5, 13.5**
 
-  - [~] 23.5 Write unit tests for CLI UX
+  - [x] 23.5 Write unit tests for CLI UX
     - Test help display
     - Test repository detection
     - Test status indicators
     - Test error messages
     - _Requirements: 6.4, 6.5, 11.5_
 
-- [~] 24. Checkpoint - Ensure all tests pass
+- [x] 24. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 

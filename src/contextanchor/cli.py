@@ -267,6 +267,12 @@ def init() -> None:
     status_commit = _install_git_hook(repo_root, "post-commit", post_commit_script)
     status_checkout = _install_git_hook(repo_root, "post-checkout", post_checkout_script)
 
+    overall_status = "active"
+    if status_commit == "unavailable" or status_checkout == "unavailable":
+        overall_status = "unavailable"
+    elif status_commit == "degraded" or status_checkout == "degraded":
+        overall_status = "degraded"
+
     style_map = {"active": "success", "degraded": "warning", "unavailable": "error"}
     hook_style = style_map.get(overall_status, "muted")
 
@@ -450,7 +456,7 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
         console.print(f"[success]✅ Context snapshot saved successfully.[/success] [muted](ID: {snapshot_id})[/muted]")
         metrics.emit_event("context_capture_completed", repo_id, branch, {"snapshot_id": snapshot_id})
         logger.info(f"Context saved: {snapshot_id} for branch {branch}")
-    except NetworkError as e:
+    except (NetworkError, ConnectionError) as e:
         logger.warning(f"Network error during save: {e}. Queueing operation.")
         local = LocalStorage()
         op_id = local.queue_operation("save_context", repo_id, payload)
@@ -543,7 +549,7 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
                 context_data.get("contexts", context_data) if isinstance(context_data, dict) else context_data,
                 output_format,
             )
-    except NetworkError as e:
+    except (NetworkError, ConnectionError) as e:
         logger.warning(f"Network error during show_context: {e}")
         console.print("[warning]⚠ Network unavailable. Falling back to local cache.[/warning]")
         local = LocalStorage()

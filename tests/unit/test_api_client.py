@@ -3,6 +3,7 @@ import requests
 from unittest.mock import patch, MagicMock
 
 from src.contextanchor.api_client import APIClient
+from src.contextanchor.errors import NetworkError, DataError
 
 
 @pytest.fixture
@@ -58,7 +59,7 @@ def test_api_client_timeout_failure(api_client):
             # All fail with timeout
             mock_request.side_effect = requests.exceptions.Timeout("Timeout")
 
-            with pytest.raises(ConnectionError, match="Request timed out"):
+            with pytest.raises(NetworkError, match="Request timed out"):
                 api_client.get_context_by_id("123")
 
             assert mock_request.call_count == 4  # Initial + 3 retries
@@ -74,7 +75,7 @@ def test_api_client_http_error_no_retry_400(api_client):
         http_error.response = mock_response
         mock_request.side_effect = http_error
 
-        with pytest.raises(ValueError, match="API Error 400: Bad Request"):
+        with pytest.raises(DataError, match="Invalid request"):
             api_client.get_context_by_id("123")
 
         assert mock_request.call_count == 1  # No retry for 400

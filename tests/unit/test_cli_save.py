@@ -15,6 +15,7 @@ def mock_deps():
         patch("src.contextanchor.local_storage.LocalStorage") as mock_local_storage_cls,
         patch("src.contextanchor.config.load_config") as mock_load_config,
         patch("pathlib.Path.exists") as mock_exists,
+        patch("src.contextanchor.logging.get_logger") as mock_get_logger,
     ):
 
         # Setup find git
