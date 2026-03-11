@@ -4,7 +4,7 @@ Agent Core component for interacting with AWS Bedrock to synthesize contexts.
 
 import json
 from typing import Dict, Any, List, cast
-import boto3  # type: ignore
+import boto3
 from datetime import datetime
 
 from .models import ContextSnapshot, CaptureSignals, generate_snapshot_id
