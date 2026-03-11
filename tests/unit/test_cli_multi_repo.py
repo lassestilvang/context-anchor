@@ -30,10 +30,10 @@ def test_cli_isolation_between_repos(mock_repo_a, mock_repo_b):
     
     # Mock dependencies
     with patch("contextanchor.cli._find_git_root") as mock_find_root, \
-         patch("contextanchor.cli.load_config") as mock_load_config, \
-         patch("contextanchor.cli.GitObserver") as mock_git_obs_class, \
-         patch("contextanchor.cli.APIClient") as mock_api_client_class, \
-         patch("contextanchor.cli.LocalStorage") as mock_local_storage_class:
+         patch("contextanchor.config.load_config") as mock_load_config, \
+         patch("contextanchor.git_observer.GitObserver") as mock_git_obs_class, \
+         patch("contextanchor.api_client.APIClient") as mock_api_client_class, \
+         patch("contextanchor.local_storage.LocalStorage") as mock_local_storage_class:
         
         # Setup common mocks
         mock_api_client = MagicMock()

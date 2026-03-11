@@ -12,6 +12,7 @@ from rich.theme import Theme
 from rich.live import Live
 from rich.status import Status
 from pathlib import Path
+from typing import Optional, Dict, Any, List
 
 # Initialize Rich console with custom theme
 custom_theme = Theme({
@@ -24,15 +25,14 @@ custom_theme = Theme({
 })
 console = Console(theme=custom_theme)
 
-from typing import Optional, Dict, Any, List
-
-from .config import Config, save_config, load_config
-from .git_observer import GitObserver
-from .api_client import APIClient
-from .local_storage import LocalStorage
+# Heavy internal modules are lazy-loaded inside commands for faster startup:
+# - .config (Config, save_config, load_config)
+# - .git_observer (GitObserver)
+# - .api_client (APIClient)
+# - .local_storage (LocalStorage)
+# - .metrics (MetricsCollector)
+# - .logging (get_logger)
 from .errors import ContextAnchorError, NetworkError
-from .logging import get_logger
-from .metrics import MetricsCollector
 
 
 def _render_context(context_data: dict, output_format: str) -> None:
@@ -270,11 +270,12 @@ def init() -> None:
 
     config_dir.mkdir(exist_ok=True)
 
+    from .config import Config, save_config
     config = Config(api_endpoint="https://api.contextanchor.example.com")
     save_config(config, config_path)
 
-    post_commit_script = "#!/bin/sh\ncontextanchor save-context --hook\n"
-    post_checkout_script = "#!/bin/sh\ncontextanchor save-context --hook --branch-switch\n"
+    post_commit_script = "#!/bin/sh\ncontextanchor save-context --hook >/dev/null 2>&1 &\n"
+    post_checkout_script = "#!/bin/sh\ncontextanchor _hook-branch-switch \"$1\" \"$2\" >/dev/tty 2>&1 &\n"
 
     status_commit = _install_git_hook(repo_root, "post-commit", post_commit_script)
     status_checkout = _install_git_hook(repo_root, "post-checkout", post_checkout_script)
@@ -346,7 +347,7 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
             pass
 
     if old_branch != branch and branch:
-        click.echo(f"\\n--- ContextAnchor: Switched to branch '{branch}' ---")
+        click.echo(f"\\n🔍 ContextAnchor: Switched to branch '{branch}'")
         try:
             from .metrics import MetricsCollector
             repo_id = git_obs.generate_repository_id() or "unknown"
@@ -651,6 +652,10 @@ def list_contexts(limit: int, output_format: str) -> None:
     repo_root = _find_git_root()
     if not repo_root:
         raise click.Abort()
+
+    from .config import load_config
+    from .git_observer import GitObserver
+    from .api_client import APIClient
 
     config = load_config(repo_root / ".contextanchor" / "config.yaml")
 

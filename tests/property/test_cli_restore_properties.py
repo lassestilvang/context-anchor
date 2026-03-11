@@ -24,12 +24,12 @@ def test_property_fallback_branch_detection(old_branch, new_branch):
     
     with (
         patch("contextanchor.cli._find_git_root") as mock_find_git,
-        patch("contextanchor.cli.GitObserver") as mock_git_obs_cls,
+        patch("contextanchor.git_observer.GitObserver") as mock_git_obs_cls,
         patch("pathlib.Path.exists", return_value=True),
         patch("builtins.open") as mock_open,
-        patch("contextanchor.cli.APIClient"),
-        patch("contextanchor.cli.load_config"),
-        patch("contextanchor.cli.LocalStorage")
+        patch("contextanchor.api_client.APIClient"),
+        patch("contextanchor.config.load_config"),
+        patch("contextanchor.local_storage.LocalStorage")
     ):
         mock_find_git.return_value = MagicMock()
         mock_git_obs = MagicMock()
@@ -61,13 +61,13 @@ def test_property_primary_branch_switch_path(new_branch, snapshot_id):
     runner = CliRunner()
     with (
         patch("contextanchor.cli._find_git_root", return_value=MagicMock()),
-        patch("contextanchor.cli.GitObserver") as mock_git_obs_cls,
+        patch("contextanchor.git_observer.GitObserver") as mock_git_obs_cls,
         patch("pathlib.Path.exists", return_value=True),
         patch("builtins.open"),
-        patch("contextanchor.cli.APIClient") as mock_api_client_cls,
-        patch("contextanchor.cli.load_config"),
+        patch("contextanchor.api_client.APIClient") as mock_api_client_cls,
+        patch("contextanchor.config.load_config"),
         patch("contextanchor.cli._render_context") as mock_render,
-        patch("contextanchor.cli.LocalStorage")
+        patch("contextanchor.local_storage.LocalStorage")
     ):
         mock_git_obs = MagicMock()
         mock_git_obs.get_current_branch.return_value = new_branch

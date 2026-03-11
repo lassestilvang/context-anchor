@@ -77,7 +77,7 @@ def capture_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, An
     Captures a new context snapshot.
     """
     try:
-        body = json.loads(event.get("body", "{}"))
+        body = json.loads(event.get("body", "{}")) if isinstance(event.get("body"), str) else event.get("body", {})
 
         repository_id = body.get("repository_id")
         branch = body.get("branch")
@@ -90,6 +90,37 @@ def capture_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, An
                 400, {"error": "Missing required fields: repository_id, branch, developer_intent"}
             )
 
+        # Check if we are already in the async worker
+        if not event.get("is_async_worker"):
+            import boto3
+            from datetime import datetime
+            from .models import generate_snapshot_id
+
+            snapshot_id = generate_snapshot_id()
+            event["is_async_worker"] = True
+            event["pre_generated_snapshot_id"] = snapshot_id
+            
+            # Use json to ensure the payload is serializable
+            payload = json.dumps(event)
+            
+            try:
+                # Need to run in background
+                if hasattr(context, "function_name"):
+                    lambda_client = boto3.client('lambda')
+                    lambda_client.invoke(
+                        FunctionName=context.function_name,
+                        InvocationType='Event',
+                        Payload=payload
+                    )
+                    return _build_response(
+                        201, {"snapshot_id": snapshot_id, "captured_at": datetime.utcnow().isoformat(), "status": "processing"}
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to invoke async lambda, falling back to sync: {e}")
+                pass # Fall back to sync
+        else:
+            snapshot_id = event.get("pre_generated_snapshot_id")
+
         signals = _parse_signals(raw_signals)
         signals.repository_id = repository_id
         signals.branch = branch
@@ -101,11 +132,14 @@ def capture_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, An
             intent=intent,
             signals=signals,
         )
+        
+        if event.get("is_async_worker") and event.get("pre_generated_snapshot_id"):
+            snapshot.snapshot_id = event.get("pre_generated_snapshot_id")
 
-        snapshot_id = get_context_store().store_snapshot(snapshot)
+        final_snapshot_id = get_context_store().store_snapshot(snapshot)
 
         return _build_response(
-            201, {"snapshot_id": snapshot_id, "captured_at": snapshot.captured_at.isoformat()}
+            201, {"snapshot_id": final_snapshot_id, "captured_at": snapshot.captured_at.isoformat()}
         )
     except json.JSONDecodeError:
         return _build_response(400, {"error": "Invalid JSON body"})

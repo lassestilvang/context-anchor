@@ -10,10 +10,10 @@ from src.contextanchor.cli import list_contexts, history, delete_context
 def mock_cmd_deps():
     with (
         patch("contextanchor.cli._find_git_root") as mock_find_git,
-        patch("contextanchor.cli.GitObserver") as mock_git_obs_cls,
-        patch("contextanchor.cli.APIClient") as mock_api_client_cls,
-        patch("contextanchor.cli.load_config") as mock_load_config,
-        patch("contextanchor.cli.LocalStorage"),
+        patch("contextanchor.git_observer.GitObserver") as mock_git_obs_cls,
+        patch("src.contextanchor.api_client.APIClient") as mock_api_client_cls,
+        patch("contextanchor.config.load_config") as mock_load_config,
+        patch("contextanchor.local_storage.LocalStorage"),
     ):
         mock_find_git.return_value = Path("/mock/repo")
 

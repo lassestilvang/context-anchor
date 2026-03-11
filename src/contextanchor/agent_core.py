@@ -121,3 +121,36 @@ CRITICAL CONSTRAINTS:
             for f in c.files_changed:
                 files.add(f)
         return sorted(list(files))
+
+    def synthesize_context_async(
+        self,
+        repository_id: str,
+        branch: str,
+        developer_id: str,
+        intent: str,
+        signals: CaptureSignals,
+        callback=None,
+    ) -> None:
+        """
+        Synthesize context asynchronously in a background thread.
+
+        Returns immediately after launching the background task. The CLI
+        can acknowledge the save request in <300ms while synthesis continues.
+
+        Args:
+            callback: Optional callable(snapshot) invoked when synthesis completes.
+        """
+        import threading
+
+        def _run():
+            try:
+                snapshot = self.synthesize_context(
+                    repository_id, branch, developer_id, intent, signals
+                )
+                if callback:
+                    callback(snapshot)
+            except Exception:
+                pass  # Background failures are logged, not raised
+
+        thread = threading.Thread(target=_run, daemon=True)
+        thread.start()
