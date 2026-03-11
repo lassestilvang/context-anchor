@@ -641,14 +641,14 @@ The system consists of:
     - Ensure Context_Store queries include repository_id
     - _Requirements: 11.2, 11.3_
 
-  - [~] 25.3 Write property tests for multi-repository support
+  - [x] 25.3 Write property tests for multi-repository support
     - **Property 38: Repository Isolation**
     - **Property 39: Repository Detection from Working Directory**
     - **Property 40: Repository Identifier Uniqueness**
     - **Property 71: Simultaneous Multi-Repository Monitoring**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.4, 11.6**
 
-  - [~] 25.4 Write unit tests for multi-repository scenarios
+  - [x] 25.4 Write unit tests for multi-repository scenarios
     - Test with multiple initialized repositories
     - Test repository ID collision scenarios
     - Test context isolation between repositories
