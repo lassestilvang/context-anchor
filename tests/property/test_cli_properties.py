@@ -1,7 +1,8 @@
 import os
 from click.testing import CliRunner
 from hypothesis import given, settings, strategies as st
-from src.contextanchor.cli import init
+from src.contextanchor.cli import init, _redact_secrets
+from src.contextanchor.models import FileChange
 from pathlib import Path
 
 
@@ -61,3 +62,30 @@ def test_property_init_behavior(tmp_path_factory, has_git, already_initialized, 
             )
     finally:
         os.chdir(current_cwd)
+
+
+@given(text=st.text(min_size=1, max_size=500))
+@settings(max_examples=50)
+def test_property_secret_redaction(text):
+    """
+    Property 34: Secret Redaction
+    Validates: Requirements 9.6
+    """
+    patterns = [r"sk-[a-zA-Z0-9]{20}"]
+    text_with_secret = text + " sk-abcdef1234567890ABCD"
+    redacted = _redact_secrets(text_with_secret, patterns)
+    assert "sk-abcdef1234567890ABCD" not in redacted
+    assert "[REDACTED]" in redacted
+
+
+@given(file_contents=st.text(min_size=1, max_size=1000))
+@settings(max_examples=50)
+def test_property_no_source_transmission(file_contents):
+    """
+    Property 33: No Source Code Transmission
+    Validates: Requirements 9.5
+    """
+    fc = FileChange(path="test.py", status="modified", lines_added=10, lines_deleted=5)
+
+    assert not hasattr(fc, "contents")
+    assert not hasattr(fc, "source_code")

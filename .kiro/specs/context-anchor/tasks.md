@@ -368,8 +368,8 @@ The system consists of:
     - _Requirements: 7.3, 7.4, 7.5, 11.5_
 
 
-- [~] 15. Implement save-context command
-  - [~] 15.1 Create save-context command handler
+- [x] 15. Implement save-context command
+  - [x] 15.1 Create save-context command handler
     - Detect current repository and branch
     - Collect git signals using GitObserver
     - Prompt user with configured prompt text
@@ -380,23 +380,23 @@ The system consists of:
     - Display confirmation with snapshot_id
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.6, 6.1, 9.6_
 
-  - [~] 15.2 Implement secret redaction
+  - [x] 15.2 Implement secret redaction
     - Apply configured redact_patterns to user input
     - Replace matched secrets with [REDACTED]
     - Log redaction events
     - _Requirements: 9.6_
 
-  - [~] 15.3 Write property tests for save-context
+  - [x] 15.3 Write property tests for save-context
     - **Property 54: Exact Prompt Wording**
     - **Property 56: Intent Capture Without Uncommitted Changes**
     - **Property 34: Secret Redaction**
     - **Validates: Requirements 2.2, 2.7, 9.6**
 
-  - [~] 15.4 Write property test for no source code transmission
+  - [x] 15.4 Write property test for no source code transmission
     - **Property 33: No Source Code Transmission**
     - **Validates: Requirements 9.5**
 
-  - [~] 15.5 Write unit tests for save-context
+  - [x] 15.5 Write unit tests for save-context
     - Test with uncommitted changes
     - Test without uncommitted changes
     - Test with network unavailable (offline mode)
@@ -437,15 +437,15 @@ The system consists of:
     - _Requirements: 5.8, 12.4_
 
 
-- [~] 17. Implement list-contexts and history commands
-  - [~] 17.1 Create list-contexts command handler
+- [x] 17. Implement list-contexts and history commands
+  - [x] 17.1 Create list-contexts command handler
     - Detect current repository
     - Query API for all contexts in repository
     - Display list with timestamps and summaries
     - Support pagination with --limit and --next-token
     - _Requirements: 6.3, 12.6_
 
-  - [~] 17.2 Create history command handler
+  - [x] 17.2 Create history command handler
     - Detect current repository and branch
     - Support optional --branch parameter
     - Query API for branch-specific contexts
@@ -455,33 +455,33 @@ The system consists of:
     - Support pagination
     - _Requirements: 12.1, 12.2, 12.3, 12.5, 12.6_
 
-  - [~] 17.3 Write property tests for history
+  - [x] 17.3 Write property tests for history
     - **Property 41: Chronological Snapshot Ordering**
     - **Property 42: History Display Completeness**
     - **Property 43: Default History Limit**
     - **Property 44: History Pagination**
     - **Validates: Requirements 12.1, 12.3, 12.5, 12.6**
 
-  - [~] 17.4 Write unit tests for list and history commands
+  - [x] 17.4 Write unit tests for list and history commands
     - Test with multiple snapshots
     - Test with empty results
     - Test pagination
     - Test branch filtering
     - _Requirements: 11.2, 12.1, 12.5_
 
-- [~] 18. Implement delete-context command
-  - [~] 18.1 Create delete-context command handler
+- [x] 18. Implement delete-context command
+  - [x] 18.1 Create delete-context command handler
     - Accept snapshot_id as parameter
     - Call API to soft-delete snapshot
     - Display confirmation with purge deadline
     - Handle errors (not found, network failure)
     - _Requirements: 6.6, 9.4_
 
-  - [~] 18.2 Write property test for deletion irreversibility
+  - [x] 18.2 Write property test for deletion irreversibility
     - **Property 70: Deletion Irreversibility Semantics**
     - **Validates: Requirements 9.4**
 
-  - [~] 18.3 Write unit tests for delete-context
+  - [x] 18.3 Write unit tests for delete-context
     - Test successful deletion
     - Test deletion of non-existent snapshot
     - Test offline mode (queue deletion)
