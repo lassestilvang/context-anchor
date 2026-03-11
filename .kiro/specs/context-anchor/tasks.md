@@ -627,14 +627,15 @@ The system consists of:
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [~] 25. Implement multi-repository support
-  - [~] 25.1 Enhance repository identification
-    - Implement repository_id generation with remote URL and path hash
-    - Ensure unique IDs for same folder name with different remotes
+- [x] 25. Implement Multi-Repository Support
+  - [x] Enhance repository identification in `git_observer.py` to ensure uniqueness
+  - [x] Implement repository isolation in `local_storage.py` (added repositories table)
+  - [x] Filter listing/history operations by repo_id
+  - [x] Validate with unit and property tests
     - Store repository metadata in local database
     - _Requirements: 11.6_
 
-  - [~] 25.2 Implement repository isolation
+  - [x] 25.2 Implement repository isolation
     - Filter list-contexts by current repository
     - Filter history by current repository
     - Ensure Context_Store queries include repository_id

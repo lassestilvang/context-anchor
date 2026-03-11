@@ -56,7 +56,7 @@ class TestCLIUX(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
         # Verify rich console was used for success message
-        mock_console.print.assert_any_call(f"[success]✅ Initialized ContextAnchor in[/success] [highlight]{self.test_repo}[/highlight]")
+        mock_console.print.assert_any_call("[success]✅ ContextAnchor initialized successfully![/success]")
 
     @patch("src.contextanchor.cli.console")
     @patch("src.contextanchor.cli._find_git_root")

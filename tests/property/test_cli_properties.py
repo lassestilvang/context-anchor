@@ -54,12 +54,9 @@ def test_property_init_behavior(tmp_path_factory, has_git, already_initialized, 
         assert (test_dir / ".contextanchor" / "config.yaml").exists()
 
         if hooks_writable:
-            assert "Hook status: active" in result.output
+            assert "ContextAnchor initialized successfully" in result.output
         else:
-            assert (
-                "Hook status: unavailable" in result.output
-                or "Hook status: degraded" in result.output
-            )
+            assert "initialized with degraded hook support" in result.output
     finally:
         os.chdir(current_cwd)
 

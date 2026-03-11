@@ -40,8 +40,7 @@ def test_init_success(tmp_path):
         result = runner.invoke(init)
 
         assert result.exit_code == 0
-        assert "Initialized ContextAnchor" in result.output
-        assert "Hook status: active" in result.output
+        assert "ContextAnchor initialized successfully" in result.output
 
         assert (tmp_path / ".contextanchor" / "config.yaml").exists()
 

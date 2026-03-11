@@ -24,10 +24,15 @@ custom_theme = Theme({
 })
 console = Console(theme=custom_theme)
 
-from .config import Config, save_config
+from typing import Optional, Dict, Any, List
 
-
-from typing import Optional
+from .config import Config, save_config, load_config
+from .git_observer import GitObserver
+from .api_client import APIClient
+from .local_storage import LocalStorage
+from .errors import ContextAnchorError, NetworkError
+from .logging import get_logger
+from .metrics import MetricsCollector
 
 
 def _render_context(context_data: dict, output_format: str) -> None:
@@ -138,11 +143,18 @@ def main(ctx: click.Context) -> None:
     if ctx.invoked_subcommand not in ["init", "_hook-branch-switch"]:
         repo_root = _find_git_root()
         if repo_root:
-            state_file = repo_root / ".contextanchor" / "state.json"
             from .git_observer import GitObserver
+            from .local_storage import LocalStorage
+            git_obs = GitObserver(str(repo_root))
+            repo_id = git_obs.generate_repository_id()
+            if repo_id:
+                local = LocalStorage()
+                local.update_last_accessed(repo_id)
+
+            state_file = repo_root / ".contextanchor" / "state.json"
             import json
 
-            git_obs = GitObserver(str(repo_root))
+            # git_obs is already instantiated above
             branch = git_obs.get_current_branch()
 
             state = {}
@@ -267,17 +279,34 @@ def init() -> None:
     status_commit = _install_git_hook(repo_root, "post-commit", post_commit_script)
     status_checkout = _install_git_hook(repo_root, "post-checkout", post_checkout_script)
 
-    overall_status = "active"
-    if status_commit == "unavailable" or status_checkout == "unavailable":
+    from .git_observer import GitObserver
+    from .local_storage import LocalStorage
+    git_obs = GitObserver(str(repo_root))
+    remote_url = git_obs.get_remote_url()
+    repo_id = git_obs.generate_repository_id(remote_url, repo_root) or "unknown"
+    local = LocalStorage()
+    local.register_repository(
+        repo_id,
+        repo_root.name,
+        str(repo_root),
+        remote_url
+    )
+
+    hook_statuses = {
+        "post-commit": status_commit,
+        "post-checkout": status_checkout,
+    }
+
+    overall_status = "active" if all(s == "active" for s in hook_statuses.values()) else "degraded"
+    if all(s == "unavailable" for s in hook_statuses.values()):
         overall_status = "unavailable"
-    elif status_commit == "degraded" or status_checkout == "degraded":
-        overall_status = "degraded"
 
-    style_map = {"active": "success", "degraded": "warning", "unavailable": "error"}
-    hook_style = style_map.get(overall_status, "muted")
-
-    console.print(f"[success]✅ Initialized ContextAnchor in[/success] [highlight]{repo_root}[/highlight]")
-    console.print(f"Hook status: [{hook_style}]{overall_status}[/{hook_style}]")
+    if overall_status == "active":
+        console.print("[success]✅ ContextAnchor initialized successfully![/success]")
+    elif overall_status == "degraded":
+        console.print("[warning]⚠ ContextAnchor initialized with degraded hook support.[/warning]")
+    else:
+        console.print("[error]❌ ContextAnchor initialization failed (hooks unavailable).[/error]")
 
 
 @main.command(name="_hook-branch-switch", hidden=True)
@@ -583,6 +612,31 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
 
 
 
+@main.command(name="list-repositories")
+def list_repositories() -> None:
+    """List all registered repositories."""
+    local = LocalStorage()
+    repos = local.list_repositories()
+    
+    if not repos:
+        console.print("[info]No repositories registered yet.[/info]")
+        return
+        
+    table = Table(title="Registered Repositories")
+    table.add_column("Name", style="success")
+    table.add_column("Root Path", style="muted")
+    table.add_column("Last Accessed", style="info")
+    
+    for repo in repos:
+        table.add_row(
+            repo["name"],
+            repo["root_path"],
+            repo["last_accessed_at"]
+        )
+    
+    console.print(table)
+
+
 @main.command(name="list-contexts")
 @click.option("--limit", "-l", type=int, default=20, help="Number of contexts to show.")
 @click.option(
@@ -597,12 +651,8 @@ def list_contexts(limit: int, output_format: str) -> None:
     repo_root = _find_git_root()
     if not repo_root:
         raise click.Abort()
-    from .config import load_config
 
     config = load_config(repo_root / ".contextanchor" / "config.yaml")
-
-    from .git_observer import GitObserver
-    from .api_client import APIClient
 
     git_obs = GitObserver(str(repo_root))
     repo_id = git_obs.generate_repository_id() or "unknown"

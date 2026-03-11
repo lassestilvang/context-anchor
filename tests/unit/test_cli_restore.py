@@ -9,13 +9,14 @@ from src.contextanchor.cli import main, hook_branch_switch
 @pytest.fixture
 def mock_restore_deps():
     with (
-        patch("src.contextanchor.cli._find_git_root") as mock_find_git,
-        patch("src.contextanchor.git_observer.GitObserver") as mock_git_obs_cls,
-        patch("src.contextanchor.api_client.APIClient") as mock_api_client_cls,
-        patch("src.contextanchor.config.load_config") as mock_load_config,
+        patch("contextanchor.cli._find_git_root") as mock_find_git,
+        patch("contextanchor.cli.GitObserver") as mock_git_obs_cls,
+        patch("contextanchor.cli.APIClient") as mock_api_client_cls,
+        patch("contextanchor.cli.load_config") as mock_load_config,
         patch("pathlib.Path.exists", return_value=True),
         patch("builtins.open") as mock_open,
-        patch("src.contextanchor.logging.get_logger") as mock_get_logger,
+        patch("contextanchor.cli.get_logger") as mock_get_logger,
+        patch("contextanchor.cli.LocalStorage"),
     ):
         mock_find_git.return_value = Path("/mock/repo")
 
@@ -53,18 +54,18 @@ def test_fallback_branch_detection(mock_restore_deps):
     result = runner.invoke(main, ["list-contexts"])
     
     # It should detect branch switch from main to feature-b
-    assert "ContextAnchor: Detected switch to branch 'feature-b'" in result.output
+    assert "🔍 ContextAnchor: Detected switch to branch 'feature-b'" in result.output
     # It should fetch and render context
     assert "Context Snapshot: snap-555" in result.output
     # It should also run the list-contexts command (which prints a list)
-    assert "Recent Contexts (1)" in result.output
+    assert "Contexts (1)" in result.output
 
 def test_hook_branch_switch_command(mock_restore_deps):
     runner = CliRunner()
     result = runner.invoke(hook_branch_switch, ["abc1234", "def5678"])
     
     assert result.exit_code == 0
-    assert "ContextAnchor: Switched to branch 'feature-b'" in result.output
+    assert "🔍 ContextAnchor: Switched to branch 'feature-b'" in result.output
     assert "Context Snapshot: snap-555" in result.output
     
     mock_restore_deps["api_client"].list_contexts.assert_called_with("repo1", "feature-b", 1)
@@ -75,7 +76,7 @@ def test_fallback_no_context_found(mock_restore_deps):
     runner = CliRunner()
     result = runner.invoke(main, ["list-contexts"])
     
-    assert "ContextAnchor: Detected switch to branch 'feature-b'" in result.output
+    assert "🔍 ContextAnchor: Detected switch to branch 'feature-b'" in result.output
     assert "No saved context found for this branch." in result.output
 
 def test_fallback_writes_state(mock_restore_deps):

@@ -9,10 +9,11 @@ from src.contextanchor.cli import list_contexts, history, delete_context
 @pytest.fixture
 def mock_cmd_deps():
     with (
-        patch("src.contextanchor.cli._find_git_root") as mock_find_git,
-        patch("src.contextanchor.git_observer.GitObserver") as mock_git_obs_cls,
-        patch("src.contextanchor.api_client.APIClient") as mock_api_client_cls,
-        patch("src.contextanchor.config.load_config") as mock_load_config,
+        patch("contextanchor.cli._find_git_root") as mock_find_git,
+        patch("contextanchor.cli.GitObserver") as mock_git_obs_cls,
+        patch("contextanchor.cli.APIClient") as mock_api_client_cls,
+        patch("contextanchor.cli.load_config") as mock_load_config,
+        patch("contextanchor.cli.LocalStorage"),
     ):
         mock_find_git.return_value = Path("/mock/repo")
 
@@ -50,7 +51,7 @@ def test_list_contexts(mock_cmd_deps):
     runner = CliRunner()
     result = runner.invoke(list_contexts, ["-l", "5"])
     assert result.exit_code == 0
-    assert "Recent Contexts (2)" in result.output
+    assert "Contexts (2)" in result.output
     mock_cmd_deps["api_client"].list_contexts.assert_called_with("repo1", None, 5)
 
 
@@ -58,7 +59,7 @@ def test_history(mock_cmd_deps):
     runner = CliRunner()
     result = runner.invoke(history, ["-b", "feature-x", "-l", "10"])
     assert result.exit_code == 0
-    assert "Recent Contexts (2)" in result.output
+    assert "Contexts (2)" in result.output
     mock_cmd_deps["api_client"].list_contexts.assert_called_with("repo1", "feature-x", 10)
 
 

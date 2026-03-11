@@ -23,12 +23,13 @@ def test_property_fallback_branch_detection(old_branch, new_branch):
     runner = CliRunner()
     
     with (
-        patch("src.contextanchor.cli._find_git_root") as mock_find_git,
-        patch("src.contextanchor.git_observer.GitObserver") as mock_git_obs_cls,
+        patch("contextanchor.cli._find_git_root") as mock_find_git,
+        patch("contextanchor.cli.GitObserver") as mock_git_obs_cls,
         patch("pathlib.Path.exists", return_value=True),
         patch("builtins.open") as mock_open,
-        patch("src.contextanchor.api_client.APIClient"),
-        patch("src.contextanchor.config.load_config")
+        patch("contextanchor.cli.APIClient"),
+        patch("contextanchor.cli.load_config"),
+        patch("contextanchor.cli.LocalStorage")
     ):
         mock_find_git.return_value = MagicMock()
         mock_git_obs = MagicMock()
@@ -43,7 +44,7 @@ def test_property_fallback_branch_detection(old_branch, new_branch):
         result = runner.invoke(main, ["list-contexts"])
         
         # Verify fallback detection outputs message
-        assert f"ContextAnchor: Detected switch to branch '{new_branch}'" in result.output
+        assert f"🔍 ContextAnchor: Detected switch to branch '{new_branch}'" in result.output
         
         # Verify it tries to save the new state
         write_calls = [c for c in mock_open.call_args_list if "w" in c[0]]
@@ -59,13 +60,14 @@ def test_property_primary_branch_switch_path(new_branch, snapshot_id):
     """
     runner = CliRunner()
     with (
-        patch("src.contextanchor.cli._find_git_root", return_value=MagicMock()),
-        patch("src.contextanchor.git_observer.GitObserver") as mock_git_obs_cls,
+        patch("contextanchor.cli._find_git_root", return_value=MagicMock()),
+        patch("contextanchor.cli.GitObserver") as mock_git_obs_cls,
         patch("pathlib.Path.exists", return_value=True),
         patch("builtins.open"),
-        patch("src.contextanchor.api_client.APIClient") as mock_api_client_cls,
-        patch("src.contextanchor.config.load_config"),
-        patch("src.contextanchor.cli._render_context") as mock_render
+        patch("contextanchor.cli.APIClient") as mock_api_client_cls,
+        patch("contextanchor.cli.load_config"),
+        patch("contextanchor.cli._render_context") as mock_render,
+        patch("contextanchor.cli.LocalStorage")
     ):
         mock_git_obs = MagicMock()
         mock_git_obs.get_current_branch.return_value = new_branch
@@ -78,5 +80,5 @@ def test_property_primary_branch_switch_path(new_branch, snapshot_id):
         result = runner.invoke(hook_branch_switch, ["old_branch", new_branch])
         
         assert result.exit_code == 0
-        assert f"ContextAnchor: Switched to branch '{new_branch}'" in result.output
+        assert f"🔍 ContextAnchor: Switched to branch '{new_branch}'" in result.output
         mock_render.assert_called_once()

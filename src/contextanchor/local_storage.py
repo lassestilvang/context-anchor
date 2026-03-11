@@ -45,6 +45,16 @@ class LocalStorage:
         conn = sqlite3.connect(self.db_path)
         try:
             conn.execute("""
+                CREATE TABLE IF NOT EXISTS repositories (
+                    repository_id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    root_path TEXT NOT NULL,
+                    remote_url TEXT,
+                    last_accessed_at TEXT
+                )
+            """)
+
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS offline_queue (
                     operation_id TEXT PRIMARY KEY,
                     operation_type TEXT NOT NULL,
@@ -78,6 +88,11 @@ class LocalStorage:
 
             # Create indexes for efficient queries
             conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_repositories_accessed
+                ON repositories(last_accessed_at DESC)
+            """)
+
+            conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_queue_repository
                 ON offline_queue(repository_id)
             """)
@@ -95,6 +110,95 @@ class LocalStorage:
             conn.commit()
         finally:
             conn.close()
+
+    def register_repository(
+        self, repo_id: str, name: str, root_path: str, remote_url: Optional[str] = None
+    ) -> None:
+        """
+        Register or update repository metadata.
+
+        Args:
+            repo_id: Unique repository identifier
+            name: Human-readable name (usually folder name)
+            root_path: Absolute path to repo root
+            remote_url: Git remote URL
+        """
+        now = datetime.now().isoformat()
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO repositories (
+                    repository_id, name, root_path, remote_url, last_accessed_at
+                ) VALUES (?, ?, ?, ?, ?)
+            """,
+                (repo_id, name, root_path, remote_url, now),
+            )
+            conn.commit()
+
+    def get_repository(self, repo_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get repository metadata.
+
+        Args:
+            repo_id: Repository identifier
+
+        Returns:
+            Dictionary with repo metadata or None
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                "SELECT repository_id, name, root_path, remote_url, last_accessed_at FROM repositories WHERE repository_id = ?",
+                (repo_id,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return {
+                "repository_id": row[0],
+                "name": row[1],
+                "root_path": row[2],
+                "remote_url": row[3],
+                "last_accessed_at": row[4],
+            }
+
+    def list_repositories(self) -> List[Dict[str, Any]]:
+        """
+        List all registered repositories.
+
+        Returns:
+            List of dictionaries with repo metadata
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                "SELECT repository_id, name, root_path, remote_url, last_accessed_at FROM repositories ORDER BY last_accessed_at DESC"
+            )
+            repos = []
+            for row in cursor.fetchall():
+                repos.append(
+                    {
+                        "repository_id": row[0],
+                        "name": row[1],
+                        "root_path": row[2],
+                        "remote_url": row[3],
+                        "last_accessed_at": row[4],
+                    }
+                )
+            return repos
+
+    def update_last_accessed(self, repo_id: str) -> None:
+        """
+        Update the last_accessed_at timestamp for a repository.
+
+        Args:
+            repo_id: Repository identifier
+        """
+        now = datetime.now().isoformat()
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                "UPDATE repositories SET last_accessed_at = ? WHERE repository_id = ?",
+                (now, repo_id),
+            )
+            conn.commit()
 
     def queue_operation(
         self, operation_type: str, repository_id: str, payload: Dict[str, Any]
