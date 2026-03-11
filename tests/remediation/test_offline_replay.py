@@ -1,7 +1,7 @@
 import responses
 import yaml
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from click.testing import CliRunner
 from contextanchor.cli import main
 from contextanchor.local_storage import LocalStorage
@@ -127,7 +127,7 @@ class TestOfflineReplay:
         inst.capture_commit_signal.return_value = CommitInfo(
             hash="abc",
             message="fix: something #123",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(UTC),
             files_changed=[]
         )
         inst.parse_references.return_value = {"pr_references": [123], "issue_references": []}

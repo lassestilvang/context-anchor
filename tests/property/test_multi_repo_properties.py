@@ -1,6 +1,6 @@
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, UTC
 from unittest.mock import Mock
 from hypothesis import given, strategies as st, settings, assume
 import git
@@ -147,7 +147,7 @@ def test_property_38_repository_isolation(snapshot1_intent, snapshot2_intent):
         snapshot_id="snap-a",
         repository_id=repo_a_id,
         branch="main",
-        captured_at=datetime.now(),
+        captured_at=datetime.now(UTC),
         developer_id="dev-1",
         goals=snapshot1_intent,
         rationale="test",

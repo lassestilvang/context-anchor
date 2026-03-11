@@ -5,7 +5,7 @@ Tests Properties 29 and 30 from the design document.
 """
 
 from hypothesis import given, strategies as st, settings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 import tempfile
 import shutil
@@ -126,9 +126,9 @@ class TestOfflineQueueProperties:
 
         # Simulate retries and verify exponential backoff
         for i in range(retry_count):
-            before_retry = datetime.now()
+            before_retry = datetime.now(UTC)
             self.storage.retry_operation(operation)
-            datetime.now()
+            datetime.now(UTC)
 
             # Verify retry count incremented
             assert operation.retry_count == i + 1
@@ -155,17 +155,20 @@ class TestOfflineQueueProperties:
         # Manually update the database to set expiration in the past
         import sqlite3
 
-        with sqlite3.connect(self.storage.db_path) as conn:
-            past_time = datetime.now() - timedelta(hours=25)
-            conn.execute(
-                """
-                UPDATE offline_queue
-                SET expires_at = ?
-                WHERE operation_id = ?
-            """,
-                (past_time.isoformat(), expired_op_id),
-            )
-            conn.commit()
+        conn = sqlite3.connect(self.storage.db_path)
+        try:
+            with conn:
+                past_time = datetime.now(UTC) - timedelta(hours=25)
+                conn.execute(
+                    """
+                    UPDATE offline_queue
+                    SET expires_at = ?
+                    WHERE operation_id = ?
+                """,
+                    (past_time.isoformat(), expired_op_id),
+                )
+        finally:
+            conn.close()
 
         # Verify expired operations are detected
         expired_ops = self.storage.get_expired_operations()

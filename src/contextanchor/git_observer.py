@@ -8,7 +8,7 @@ and repository ID generation.
 
 import hashlib
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Any
@@ -351,7 +351,7 @@ class GitObserver:
         return {
             "from_branch": from_branch,
             "to_branch": to_branch,
-            "timestamp": datetime.now(),
+            "timestamp": datetime.now(UTC),
             "repository_id": self.generate_repository_id(),
         }
 

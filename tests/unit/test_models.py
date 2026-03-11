@@ -5,7 +5,7 @@ Tests the core data structures and their validation logic.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from src.contextanchor.models import (
     ContextSnapshot,
     FileChange,
@@ -29,7 +29,7 @@ class TestContextSnapshot:
             snapshot_id="test-id-123",
             repository_id="repo-abc",
             branch="main",
-            captured_at=datetime.now(),
+            captured_at=datetime.now(UTC),
             developer_id="dev-1",
             goals="Implement user authentication",
             rationale="Users need secure access to the system",
@@ -52,7 +52,7 @@ class TestContextSnapshot:
                 snapshot_id="test-id",
                 repository_id="repo-abc",
                 branch="main",
-                captured_at=datetime.now(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals="Test goals",
                 rationale="Test rationale",
@@ -69,7 +69,7 @@ class TestContextSnapshot:
                 snapshot_id="test-id",
                 repository_id="repo-abc",
                 branch="main",
-                captured_at=datetime.now(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals="Test goals",
                 rationale="Test rationale",
@@ -87,7 +87,7 @@ class TestContextSnapshot:
                 snapshot_id="test-id",
                 repository_id="repo-abc",
                 branch="main",
-                captured_at=datetime.now(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals="Test goals",
                 rationale="Test rationale",
@@ -123,7 +123,7 @@ class TestContextSnapshot:
                 snapshot_id="test-id",
                 repository_id="repo-abc",
                 branch="main",
-                captured_at=datetime.now(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals="Test goals",
                 rationale="Test rationale",
@@ -145,7 +145,7 @@ class TestContextSnapshot:
                 snapshot_id="test-id",
                 repository_id="repo-abc",
                 branch="main",
-                captured_at=datetime.now(),
+                captured_at=datetime.now(UTC),
                 developer_id="dev-1",
                 goals=long_text,
                 rationale=long_text,
@@ -162,7 +162,7 @@ class TestContextSnapshot:
             snapshot_id="test-id",
             repository_id="repo-abc",
             branch="main",
-            captured_at=datetime.now(),
+            captured_at=datetime.now(UTC),
             developer_id="dev-1",
             goals="Implement authentication",
             rationale="Security is important",
@@ -206,7 +206,7 @@ class TestCommitInfo:
         commit = CommitInfo(
             hash="abc123def456",
             message="Add authentication feature",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(UTC),
             files_changed=["src/auth.py", "tests/test_auth.py"],
         )
 
@@ -224,7 +224,7 @@ class TestCaptureSignals:
             repository_id="repo-123",
             branch="feature/auth",
             uncommitted_files=[FileChange("src/auth.py", "modified", 10, 5)],
-            recent_commits=[CommitInfo("abc123", "Initial commit", datetime.now(), ["README.md"])],
+            recent_commits=[CommitInfo("abc123", "Initial commit", datetime.now(UTC), ["README.md"])],
             pr_references=[123],
             issue_references=[456],
             github_metadata=GitHubRepo("owner", "repo", "https://github.com/owner/repo"),
@@ -264,7 +264,7 @@ class TestRepository:
             root_path="/home/user/projects/myrepo",
             remote_url="https://github.com/user/myrepo.git",
             github_metadata=GitHubRepo("user", "myrepo", "https://github.com/user/myrepo.git"),
-            initialized_at=datetime.now(),
+            initialized_at=datetime.now(UTC),
             hook_status="active",
         )
 
@@ -312,7 +312,7 @@ class TestQueuedOperation:
 
     def test_queued_operation_creation(self):
         """Test creating a queued operation."""
-        now = datetime.now()
+        now = datetime.now(UTC)
         expires = now + timedelta(hours=24)
 
         operation = QueuedOperation(
@@ -332,7 +332,7 @@ class TestQueuedOperation:
 
     def test_queued_operation_with_retry(self):
         """Test queued operation with retry information."""
-        now = datetime.now()
+        now = datetime.now(UTC)
         next_retry = now + timedelta(seconds=30)
 
         operation = QueuedOperation(
