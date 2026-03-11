@@ -110,20 +110,20 @@ class GitObserver:
     def get_github_metadata(self) -> Optional["GitHubRepo"]:  # noqa: F821
         """
         Extract GitHub metadata from the remote URL.
-        
+
         Returns:
             GitHubRepo object if the remote is a GitHub URL, None otherwise.
         """
         url = self.get_remote_url()
         if not url:
             return None
-            
+
         # Standardize URL
         normalized = self._normalize_git_url(url)
-        
+
         if "github.com" not in normalized:
             return None
-            
+
         try:
             # Normalized is https://github.com/owner/repo
             path = urlparse(normalized).path.strip("/")
@@ -137,7 +137,7 @@ class GitObserver:
                 )
         except Exception:
             pass
-            
+
         return None
 
     def generate_repository_id(
@@ -288,10 +288,9 @@ class GitObserver:
             message_str = commit.message
             if isinstance(message_str, bytes):
                 message_str = message_str.decode("utf-8")
-            
             message_str = message_str.strip()
             # Extract references
-            refs = self.parse_references(message_str)
+            self.parse_references(message_str)
 
             return CommitInfo(
                 hash=commit.hexsha,
@@ -305,10 +304,10 @@ class GitObserver:
     def parse_references(self, text: str) -> dict:
         """
         Parse issue and PR references from text using hardened patterns.
-        
+
         Args:
             text: Text to parse (e.g., commit message)
-            
+
         Returns:
             Dictionary with 'issue_references' and 'pr_references' lists.
         """
@@ -316,15 +315,15 @@ class GitObserver:
         # Look for # followed by digits, or GH- followed by digits
         pattern = re.compile(r'(?i)(?:#|gh-)(\d+)')
         matches = pattern.findall(text)
-        
+
         # Extract PR references specifically from merge commits if possible
         # e.g. "Merge pull request #123 from..."
         pr_pattern = re.compile(r'(?i)pull request #(\d+)')
         pr_matches = pr_pattern.findall(text)
-        
+
         unique_issues = list(set(int(m) for m in matches))
         unique_prs = list(set(int(m) for m in pr_matches))
-        
+
         return {
             "issue_references": unique_issues,
             "pr_references": unique_prs

@@ -126,8 +126,6 @@ def _redact_secrets(text: str, patterns: list) -> str:
     return text
 
 
- 
- 
 def _replay_queued_operations(client: Any, local: Any, repo_id: str, force: bool = False) -> int:
     """Replay pending operations for a repository."""
     ops = local.get_pending_operations()
@@ -246,7 +244,7 @@ def main(ctx: click.Context) -> None:
 
                 # Show context as fallback
                 console.print(
-                    f"\\n[highlight]🔍 ContextAnchor: Detected switch to branch '{branch}' (fallback)[/highlight]"
+                    f"\n[highlight]🔍 ContextAnchor: Detected switch to branch '{branch}'[/highlight]"
                 )
                 try:
                     from .metrics import MetricsCollector
@@ -275,7 +273,7 @@ def main(ctx: click.Context) -> None:
                             ctx_list = contexts
                             if isinstance(contexts, dict):
                                 ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
-                            
+
                             if ctx_list and len(ctx_list) > 0:
                                 _render_context(ctx_list[0], "text")
                             else:
@@ -458,7 +456,7 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
                 ctx_list = contexts
                 if isinstance(contexts, dict):
                     ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
-                
+
                 if ctx_list and len(ctx_list) > 0:
                     _render_context(ctx_list[0], "text")
                 else:
@@ -530,7 +528,7 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
         refs = git_obs.parse_references(commit_sig.message)
         signals.pr_references = refs["pr_references"]
         signals.issue_references = refs["issue_references"]
-        
+
     signals.github_metadata = git_obs.get_github_metadata()
 
     intent = message
@@ -686,7 +684,7 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
             ctx_list = context_data
             if isinstance(context_data, dict):
                 ctx_list = context_data.get("snapshots", context_data.get("contexts", context_data))
-            
+
             _render_context_list(ctx_list, output_format)
     except (NetworkError, ConnectionError) as e:
         logger.warning(f"Network error during show_context: {e}")
@@ -821,6 +819,7 @@ def list_contexts(limit: int, output_format: str) -> None:
 
     from .errors import ContextAnchorError, NetworkError
     from .logging import get_logger
+    from .local_storage import LocalStorage
 
     logger = get_logger("cli.list_contexts")
 
@@ -829,12 +828,12 @@ def list_contexts(limit: int, output_format: str) -> None:
             # Try to drain queue
             _replay_queued_operations(client, LocalStorage(), repo_id)
             contexts = client.list_contexts(repo_id, None, limit)
-        
+
         # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
         ctx_list = contexts
         if isinstance(contexts, dict):
             ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
-            
+
         _render_context_list(ctx_list, output_format)
     except NetworkError as e:
         logger.error(f"Network error in list_contexts: {e}")
@@ -876,6 +875,7 @@ def history(branch: Optional[str], limit: int, output_format: str) -> None:
 
     from .errors import ContextAnchorError, NetworkError
     from .logging import get_logger
+    from .local_storage import LocalStorage
 
     logger = get_logger("cli.history")
 
@@ -886,12 +886,12 @@ def history(branch: Optional[str], limit: int, output_format: str) -> None:
             # Try to drain queue
             _replay_queued_operations(client, LocalStorage(), repo_id)
             contexts = client.list_contexts(repo_id, target_branch, limit)
-        
+
         # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
         ctx_list = contexts
         if isinstance(contexts, dict):
             ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
-            
+
         _render_context_list(ctx_list, output_format)
     except NetworkError as e:
         logger.error(f"Network error in history: {e}")

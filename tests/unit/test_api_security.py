@@ -49,4 +49,4 @@ def test_api_client_uses_session(mock_request):
     # Should call session.request, not requests.request
     assert mock_request.called
     assert mock_request.call_args[0][0] == "GET"
-    assert "https://api.example.com/test" in mock_request.call_args[0][1]
+    assert "https://api.example.com/v1/test" in mock_request.call_args[0][1]

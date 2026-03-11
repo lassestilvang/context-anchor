@@ -8,6 +8,7 @@ Requirements: 4.1, 4.2, 4.3, 12.6
 """
 
 import os
+import dataclasses
 from datetime import datetime
 from typing import Dict, Any, Optional
 import boto3

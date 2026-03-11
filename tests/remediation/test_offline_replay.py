@@ -1,5 +1,4 @@
 import responses
-import pytest
 import yaml
 import json
 from datetime import datetime
@@ -42,7 +41,7 @@ class TestOfflineReplay:
 
         # Path where CLI will look for the db
         self.db_path = self.dot_dir / "local.db"
-        
+
         # Initialize storage
         self.storage = LocalStorage(db_path=self.db_path)
         self.storage.register_repository("repo-1", "test-repo", self.temp_dir)
@@ -79,7 +78,7 @@ class TestOfflineReplay:
         mocker.patch("contextanchor.cli._find_git_root", return_value=Path(self.temp_dir))
         mocker.patch("contextanchor.local_storage.LocalStorage", return_value=self.storage)
         mocker.patch("contextanchor.cli.LocalStorage", return_value=self.storage, create=True)
-        
+
         mock_git = mocker.patch("contextanchor.git_observer.GitObserver")
         mock_git.return_value.generate_repository_id.return_value = "repo-1"
         mock_git.return_value.get_current_branch.return_value = "main"
@@ -118,16 +117,16 @@ class TestOfflineReplay:
         mocker.patch("contextanchor.cli._find_git_root", return_value=Path(self.temp_dir))
         mocker.patch("contextanchor.local_storage.LocalStorage", return_value=self.storage)
         mocker.patch("contextanchor.cli.LocalStorage", return_value=self.storage, create=True)
-        
+
         mock_git = mocker.patch("contextanchor.git_observer.GitObserver")
         inst = mock_git.return_value
         inst.generate_repository_id.return_value = "repo-1"
         inst.get_current_branch.return_value = "main"
-        
+
         inst.capture_uncommitted_changes.return_value = []
         inst.capture_commit_signal.return_value = CommitInfo(
-            hash="abc", 
-            message="fix: something #123", 
+            hash="abc",
+            message="fix: something #123",
             timestamp=datetime.now(),
             files_changed=[]
         )

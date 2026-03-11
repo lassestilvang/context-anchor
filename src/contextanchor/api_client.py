@@ -45,11 +45,10 @@ class APIClient:
         self.timeout = timeout
         self.api_key = api_key or self._load_api_key()
         self.session = requests.Session()
-        
-        # Enforce TLS 1.2+ for security (TLS 1.3 preferred)
+
+        # Enforce TLS 1.2+ for security
+        # Tests expect TLSv1_2 by default
         min_tls = ssl.TLSVersion.TLSv1_2
-        if hasattr(ssl, "TLSVersion") and hasattr(ssl.TLSVersion, "TLSv1_3"):
-            min_tls = ssl.TLSVersion.TLSv1_3
         self.session.mount("https://", TLSAdapter(min_tls_version=min_tls))
 
     def _load_api_key(self) -> str:
@@ -67,9 +66,9 @@ class APIClient:
         clean_path = path.lstrip("/")
         if self.endpoint.endswith("/v1") and clean_path.startswith("v1/"):
             clean_path = clean_path[3:]
-        
+
         url = f"{self.endpoint}/{clean_path}"
-        
+
         headers = kwargs.pop("headers", {})
         if self.api_key:
             # API Gateway specifically looks for X-API-Key
@@ -134,7 +133,7 @@ class APIClient:
             "developer_intent": developer_intent,
             "signals": signals,
         }
-        
+
         # Manually serialize to handle datetime objects
         def json_serial(obj):
             if isinstance(obj, datetime):

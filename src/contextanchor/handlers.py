@@ -4,6 +4,7 @@ AWS Lambda handlers for the ContextAnchor API endpoints.
 
 import json
 import logging
+import dataclasses
 from typing import Dict, Any
 
 from .agent_core import AgentCore
@@ -271,7 +272,7 @@ def delete_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any
         qsp = event.get("queryStringParameters") or {}
         dev_id = qsp.get("developer_id")
         snapshot = get_context_store().get_snapshot_by_id(snapshot_id)
-        
+
         if snapshot and dev_id and snapshot.developer_id != dev_id:
             return _build_response(403, {"error": "Access denied to delete this snapshot", "code": "FORBIDDEN"})
 
@@ -286,9 +287,6 @@ def delete_context_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any
     except Exception as e:
         logger.error(f"Error deleting context: {str(e)}")
         return _build_response(500, {"error": "Internal Server Error", "code": "INTERNAL_ERROR"})
-
-
-        return _build_response(503, {"status": "unhealthy", "error": "DynamoDB connection failed"})
 
 
 def health_check_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
