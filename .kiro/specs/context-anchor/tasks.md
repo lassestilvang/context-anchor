@@ -58,6 +58,7 @@ The system consists of:
     - Implement capture_commit_signal (hash, message, timestamp, files)
     - Implement capture_branch_switch (from_branch, to_branch, timestamp)
     - Implement capture_uncommitted_changes (staged and unstaged)
+    - Implement capture_uncommitted_changes (staged and unstaged)
     - Implement capture_diff_signal (file paths, summary stats)
     - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.6_
 
@@ -1022,57 +1023,36 @@ The system consists of:
   - Update this plan task statuses to reflect completed remediation work
   - _Requirements: All_
 
-- [ ] 43. Fix deprecation warnings and resource cleanup
-  - [ ] 43.1 Replace deprecated datetime.utcnow() calls
+- [x] 43. Fix deprecation warnings and resource cleanup
+  - [x] 43.1 Replace deprecated datetime.utcnow() calls
     - Replace all `datetime.utcnow()` with `datetime.now(datetime.UTC)` in src/
     - Replace all `datetime.utcnow()` with `datetime.now(datetime.UTC)` in tests/
     - Ensure timezone-aware datetime objects throughout codebase
     - _Requirements: 8.5, 13.1_
-    - _Impact: 9,927 deprecation warnings currently in test output_
 
-  - [ ] 43.2 Fix SQLite connection resource warnings
+  - [x] 43.2 Fix SQLite connection resource warnings
     - Add explicit connection cleanup in LocalStorage class methods
     - Implement context manager protocol for LocalStorage
     - Add connection pooling or ensure proper close() calls
     - Fix test fixtures to properly close database connections
     - _Requirements: 8.5, 13.1_
-    - _Impact: Multiple ResourceWarnings about unclosed database connections_
 
-  - [ ] 43.3 Validate fixes with clean test run
+  - [x] 43.3 Validate fixes with clean test run
     - Run full test suite and verify zero deprecation warnings
     - Run full test suite and verify zero resource warnings
     - Ensure all 312 tests still pass
     - Maintain 82%+ code coverage
     - _Requirements: All_
 
-- [ ] 44. Install and run missing code quality tools
-  - [ ] 44.1 Install missing development tools
-    - Install flake8 in current environment: `pip install flake8`
-    - Install bandit in current environment: `pip install bandit`
-    - Verify tools are accessible in PATH
-    - _Requirements: 9.1, 9.2, 9.5, 9.6_
-
-  - [ ] 44.2 Run flake8 linting and fix issues
-    - Run: `flake8 src/ tests/ --count --statistics`
-    - Fix any linting violations found
-    - Ensure compliance with .flake8 configuration (max-line-length=100)
-    - _Requirements: 9.1, 9.2, 9.5, 9.6_
-
-  - [ ] 44.3 Run bandit security scan and fix issues
-    - Run: `bandit -r src/ -ll`
-    - Review and fix any security vulnerabilities found
-    - Document any intentional exceptions with inline comments
-    - _Requirements: 9.1, 9.2, 9.5, 9.6_
-
-- [ ] 45. Deploy and validate AWS infrastructure
-  - [ ] 45.1 Verify deployment prerequisites
+- [ ] 44. Deploy and validate AWS infrastructure
+  - [ ] 44.1 Verify deployment prerequisites
     - Verify AWS CLI is configured with valid credentials
     - Verify Node.js >= 18.0.0 is installed
     - Verify AWS CDK is installed (globally or via npx)
     - Verify AWS account has sufficient permissions
     - _Requirements: 14.1, 14.2, 14.3, 14.4_
 
-  - [ ] 45.2 Deploy infrastructure to test environment
+  - [ ] 44.2 Deploy infrastructure to test environment
     - Navigate to infrastructure/ directory
     - Run: `./deploy.sh`
     - Capture API Gateway endpoint URL from CDK outputs
@@ -1080,7 +1060,7 @@ The system consists of:
     - Verify all stacks deployed successfully
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
 
-  - [ ] 45.3 Validate deployed resources
+  - [ ] 44.3 Validate deployed resources
     - Verify DynamoDB table exists with correct schema
     - Verify Lambda functions are deployed and accessible
     - Verify API Gateway endpoints respond to health check
@@ -1088,7 +1068,7 @@ The system consists of:
     - Verify cost guardrails (budgets, alarms) are configured
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
 
-  - [ ] 45.4 Test end-to-end workflow against deployed API
+  - [ ] 44.4 Test end-to-end workflow against deployed API
     - Initialize a test repository with `contextanchor init`
     - Configure API endpoint in .contextanchor/config.yaml
     - Configure API key in ~/.contextanchor/credentials
@@ -1099,30 +1079,35 @@ The system consists of:
     - Test offline mode and sync command
     - _Requirements: All Phase 1-4 requirements_
 
-- [ ] 46. Create production readiness checklist
-  - [ ] 46.1 Document deployment validation checklist
+- [ ] 45. Create production readiness checklist
+  - [ ] 45.1 Document deployment validation checklist
     - Create checklist for verifying successful deployment
     - Include steps for API endpoint configuration
     - Include steps for API key setup and rotation
     - Include monitoring and alerting verification
     - _Requirements: 7.1, 14.4_
 
-  - [ ] 46.2 Create operational runbook
+  - [ ] 45.2 Create operational runbook
     - Document common operational tasks (backup, restore, scaling)
     - Document troubleshooting procedures for common issues
     - Document incident response procedures
     - Document cost monitoring and optimization procedures
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 14.5, 14.6_
 
-  - [ ] 46.3 Create user onboarding guide
+  - [x] 45.3 Verify code quality and security standards
+    - Run flake8 linting and verify 0 issues
+    - Run bandit security scan and verify 0 issues
+    - _Requirements: 9.1, 9.2, 9.5, 9.6_
+
+  - [ ] 45.4 Create user onboarding guide
     - Create step-by-step first-time user guide
     - Include screenshots or terminal recordings
     - Create FAQ section based on common questions
     - Create video walkthrough or animated GIF demo
     - _Requirements: 6.1, 6.2, 6.3, 7.1_
 
-- [ ] 47. Optional enhancements for post-MVP consideration
-  - [ ] 47.1 Shell completion scripts
+- [ ] 46. Optional enhancements for post-MVP consideration
+  - [ ] 46.1 Shell completion scripts
     - Create bash completion script for contextanchor commands
     - Create zsh completion script for contextanchor commands
     - Create fish completion script for contextanchor commands
@@ -1136,7 +1121,7 @@ The system consists of:
     - Add table formatting for list/history commands
     - _Requirements: 13.5_
 
-  - [ ] 47.3 Additional metrics and analytics
+  - [ ] 46.3 Additional metrics and analytics
     - Track context snapshot size distribution
     - Track most frequently accessed contexts
     - Track average time between context saves
@@ -1144,7 +1129,7 @@ The system consists of:
     - Export analytics dashboard data
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
 
-  - [ ] 47.4 IDE integration exploration
+  - [ ] 46.4 IDE integration exploration
     - Research VS Code extension API for context integration
     - Create proof-of-concept VS Code extension
     - Research JetBrains IDE plugin API
@@ -1167,47 +1152,33 @@ The system consists of:
 ## Current Status (2026-03-11)
 
 ### Completion Summary
-- **Tasks Completed**: 42/47 (89%)
+- **Tasks Completed**: 43/46 (93%)
 - **Tests Passing**: 312/312 (100%)
 - **Code Coverage**: 82% (exceeds 80% target)
 - **Type Checking**: Passing (mypy reports no issues)
+- **Warnings**: 0 deprecation warnings, 0 resource warnings
 
 ### Remaining Work
-- **Task 43**: Fix deprecation warnings and resource cleanup (High Priority)
-  - Impact: 9,927 warnings in test output
-  - Effort: ~2-4 hours
-  - Blocking: No, but should be done before production
-
-- **Task 44**: Install and run missing code quality tools (High Priority)
-  - Impact: Unknown linting/security issues
-  - Effort: ~1-2 hours
-  - Blocking: Yes, required for production readiness
-
-- **Task 45**: Deploy and validate AWS infrastructure (Critical Priority)
+- **Task 44**: Deploy and validate AWS infrastructure (Critical Priority)
   - Impact: Backend not yet validated in AWS
   - Effort: ~4-8 hours (including troubleshooting)
   - Blocking: Yes, required to verify end-to-end functionality
 
-- **Task 46**: Create production readiness checklist (Medium Priority)
+- **Task 45**: Create production readiness checklist (Medium Priority)
   - Impact: Operational documentation gaps
   - Effort: ~4-6 hours
   - Blocking: No, but recommended before user release
 
-- **Task 47**: Optional enhancements (Low Priority)
+- **Task 46**: Optional enhancements (Low Priority)
   - Impact: User experience improvements
   - Effort: ~8-16 hours
   - Blocking: No, post-MVP enhancements
 
 ### Recommended Next Steps
-1. Complete Task 43 (fix warnings) - Quick win for code quality
-2. Complete Task 44 (code quality tools) - Verify no hidden issues
-3. Complete Task 45 (AWS deployment) - Critical for validation
-4. Complete Task 46 (documentation) - Prepare for user release
-5. Consider Task 47 (enhancements) - Based on user feedback
+1. Complete Task 44 (AWS deployment) - Critical for validation
+2. Complete Task 45 (documentation) - Prepare for user release
+3. Consider Task 46 (enhancements) - Based on user feedback
 
 ### Known Issues
-- Deprecation warnings from datetime.utcnow() usage (9,927 occurrences)
-- SQLite connection resource warnings in tests
-- flake8 and bandit not installed in current environment
 - AWS infrastructure deployment status unknown
 - End-to-end validation against deployed API not yet performed
