@@ -46,6 +46,42 @@ def _render_context(context_data: dict, output_format: str) -> None:
 
     content = f"# Goals\n{context_data.get('goals', 'None specified')}\n\n"
     content += f"# Rationale\n{context_data.get('rationale', 'None specified')}\n\n"
+
+    # Add GitHub Enrichment
+    signals = context_data.get("signals", {})
+    gh_meta = signals.get("github_metadata")
+    pr_refs = signals.get("pr_references", [])
+    issue_refs = signals.get("issue_references", [])
+
+    if gh_meta or pr_refs or issue_refs:
+        content += "# GitHub Enrichment\n"
+        if gh_meta:
+            owner = gh_meta.get("owner", "unknown")
+            name = gh_meta.get("name", "unknown")
+            remote_url = gh_meta.get("remote_url", "#")
+            content += f"- **Repo:** [{owner}/{name}]({remote_url})\n"
+
+        if pr_refs:
+            pr_links = []
+            for pr in pr_refs:
+                if gh_meta:
+                    url = f"https://github.com/{gh_meta['owner']}/{gh_meta['name']}/pull/{pr}"
+                    pr_links.append(f"[PR #{pr}]({url})")
+                else:
+                    pr_links.append(f"PR #{pr}")
+            content += f"- **Pull Requests:** {', '.join(pr_links)}\n"
+
+        if issue_refs:
+            issue_links = []
+            for issue in issue_refs:
+                if gh_meta:
+                    url = f"https://github.com/{gh_meta['owner']}/{gh_meta['name']}/issues/{issue}"
+                    issue_links.append(f"[Issue #{issue}]({url})")
+                else:
+                    issue_links.append(f"Issue #{issue}")
+            content += f"- **Issues:** {', '.join(issue_links)}\n"
+        content += "\n"
+
     content += "# Next Steps\n"
     for step in context_data.get("next_steps", []):
         content += f"- {step}\n"
@@ -88,6 +124,40 @@ def _redact_secrets(text: str, patterns: list) -> str:
         except re.error:
             pass
     return text
+
+
+ 
+ 
+def _replay_queued_operations(client: Any, local: Any, repo_id: str, force: bool = False) -> int:
+    """Replay pending operations for a repository."""
+    ops = local.get_pending_operations()
+    # Filter by repo_id
+    pending = [op for op in ops if op.repository_id == repo_id]
+
+    if not pending:
+        return 0
+
+    success_count = 0
+    for op in pending:
+        try:
+            if op.operation_type == "save_context":
+                p = op.payload
+                client.create_context(
+                    p["repository_id"],
+                    p["branch"],
+                    p["developer_intent"],
+                    p["signals"],
+                )
+            elif op.operation_type == "delete_context":
+                client.delete_context(op.payload["snapshot_id"])
+
+            local.mark_operation_complete(op.operation_id)
+            success_count += 1
+        except Exception:
+            local.retry_operation(op)
+            if not force:
+                break
+    return success_count
 
 
 def _find_git_root() -> Optional[Path]:
@@ -201,11 +271,11 @@ def main(ctx: click.Context) -> None:
 
                         try:
                             contexts = client.list_contexts(repo_id, branch, 1)
-                            ctx_list = (
-                                contexts.get("contexts", contexts)
-                                if isinstance(contexts, dict)
-                                else contexts
-                            )
+                            # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
+                            ctx_list = contexts
+                            if isinstance(contexts, dict):
+                                ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
+                            
                             if ctx_list and len(ctx_list) > 0:
                                 _render_context(ctx_list[0], "text")
                             else:
@@ -385,9 +455,10 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
 
             try:
                 contexts = client.list_contexts(repo_id, branch, 1)
-                ctx_list = (
-                    contexts.get("contexts", contexts) if isinstance(contexts, dict) else contexts
-                )
+                ctx_list = contexts
+                if isinstance(contexts, dict):
+                    ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
+                
                 if ctx_list and len(ctx_list) > 0:
                     _render_context(ctx_list[0], "text")
                 else:
@@ -455,6 +526,13 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
         capture_source="hook" if hook else "cli",
     )
 
+    if commit_sig:
+        refs = git_obs.parse_references(commit_sig.message)
+        signals.pr_references = refs["pr_references"]
+        signals.issue_references = refs["issue_references"]
+        
+    signals.github_metadata = git_obs.get_github_metadata()
+
     intent = message
     if not intent:
         if hook and not os.isatty(0):
@@ -492,6 +570,8 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
 
     try:
         with console.status("[info]Saving context to cloud...[/info]", spinner="dots"):
+            # Try to drain queue before new operation
+            _replay_queued_operations(client, LocalStorage(), repo_id)
             resp = client.create_context(repo_id, branch, intent_str, payload["signals"])
             snapshot_id = resp.get("snapshot_id", "unknown")
 
@@ -585,6 +665,8 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
     try:
         if status_msg:
             with console.status(status_msg, spinner="dots"):
+                # Try to drain queue before retrieving
+                _replay_queued_operations(client, LocalStorage(), repo_id)
                 if snapshot_id:
                     context_data = client.get_context_by_id(snapshot_id)
                 else:
@@ -600,14 +682,12 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
             metrics.emit_event("context_restored", repo_id, branch, {"snapshot_id": snapshot_id})
             logger.info(f"Context restored: {snapshot_id}")
         else:
-            _render_context_list(
-                (
-                    context_data.get("contexts", context_data)
-                    if isinstance(context_data, dict)
-                    else context_data
-                ),
-                output_format,
-            )
+            # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
+            ctx_list = context_data
+            if isinstance(context_data, dict):
+                ctx_list = context_data.get("snapshots", context_data.get("contexts", context_data))
+            
+            _render_context_list(ctx_list, output_format)
     except (NetworkError, ConnectionError) as e:
         logger.warning(f"Network error during show_context: {e}")
         console.print("[warning]⚠ Network unavailable. Falling back to local cache.[/warning]")
@@ -673,6 +753,47 @@ def list_repositories() -> None:
     console.print(table)
 
 
+@main.command()
+def sync() -> None:
+    """Synchronize offline operations with the cloud."""
+    repo_root = _find_git_root()
+    if not repo_root:
+        console.print("[error]❌ Error: Not inside a git repository.[/error]")
+        raise click.Abort()
+
+    from .config import load_config
+
+    config = load_config(repo_root / ".contextanchor" / "config.yaml")
+
+    from .git_observer import GitObserver
+
+    git_obs = GitObserver(str(repo_root))
+    repo_id = git_obs.generate_repository_id() or "unknown"
+
+    from .api_client import APIClient
+    from .local_storage import LocalStorage
+
+    client = APIClient(config.api_endpoint, config.retry_attempts, config.api_timeout_seconds)
+    local = LocalStorage()
+
+    pending_count = local.count_queued_operations(repo_id)
+    if pending_count == 0:
+        console.print("[info]No pending operations to sync.[/info]")
+        return
+
+    with console.status(f"[info]Syncing {pending_count} operations...[/info]", spinner="dots"):
+        synced = _replay_queued_operations(client, local, repo_id, force=True)
+
+    if synced > 0:
+        console.print(f"[success]✅ Successfully synced {synced} operations.[/success]")
+
+    remaining = local.count_queued_operations(repo_id)
+    if remaining > 0:
+        console.print(
+            f"[warning]⚠ {remaining} operations failed to sync and remain in queue.[/warning]"
+        )
+
+
 @main.command(name="list-contexts")
 @click.option("--limit", "-l", type=int, default=20, help="Number of contexts to show.")
 @click.option(
@@ -705,11 +826,16 @@ def list_contexts(limit: int, output_format: str) -> None:
 
     try:
         with console.status("[info]Fetching contexts...[/info]", spinner="dots"):
+            # Try to drain queue
+            _replay_queued_operations(client, LocalStorage(), repo_id)
             contexts = client.list_contexts(repo_id, None, limit)
-        _render_context_list(
-            contexts.get("contexts", contexts) if isinstance(contexts, dict) else contexts,
-            output_format,
-        )
+        
+        # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
+        ctx_list = contexts
+        if isinstance(contexts, dict):
+            ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
+            
+        _render_context_list(ctx_list, output_format)
     except NetworkError as e:
         logger.error(f"Network error in list_contexts: {e}")
         console.print(f"[error]❌ Network error:[/error] {e}")
@@ -757,11 +883,16 @@ def history(branch: Optional[str], limit: int, output_format: str) -> None:
         with console.status(
             f"[info]Fetching history for {target_branch}...[/info]", spinner="dots"
         ):
+            # Try to drain queue
+            _replay_queued_operations(client, LocalStorage(), repo_id)
             contexts = client.list_contexts(repo_id, target_branch, limit)
-        _render_context_list(
-            contexts.get("contexts", contexts) if isinstance(contexts, dict) else contexts,
-            output_format,
-        )
+        
+        # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
+        ctx_list = contexts
+        if isinstance(contexts, dict):
+            ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
+            
+        _render_context_list(ctx_list, output_format)
     except NetworkError as e:
         logger.error(f"Network error in history: {e}")
         console.print(f"[error]❌ Network error:[/error] {e}")
