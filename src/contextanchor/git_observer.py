@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .models import CommitInfo
+    from .models import CommitInfo, GitHubRepo
 
 import git
 from git.exc import InvalidGitRepositoryError, GitCommandError

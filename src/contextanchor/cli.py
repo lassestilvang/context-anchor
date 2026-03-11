@@ -10,7 +10,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.theme import Theme
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, cast
 
 # Initialize Rich console with custom theme
 custom_theme = Theme(
@@ -269,12 +269,14 @@ def main(ctx: click.Context) -> None:
 
                         try:
                             contexts = client.list_contexts(repo_id, branch, 1)
-                            # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
-                            ctx_list = contexts
+                            # Extract list from wrapper if needed
+                            ctx_list: list = []
                             if isinstance(contexts, dict):
-                                ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
+                                ctx_list = cast(list, contexts.get("snapshots", contexts.get("contexts", [])))
+                            elif isinstance(contexts, list):
+                                ctx_list = contexts
 
-                            if ctx_list and len(ctx_list) > 0:
+                            if ctx_list:
                                 _render_context(ctx_list[0], "text")
                             else:
                                 console.print(
@@ -453,11 +455,14 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
 
             try:
                 contexts = client.list_contexts(repo_id, branch, 1)
-                ctx_list = contexts
+                # Extract list from wrapper if needed
+                ctx_list: list = []
                 if isinstance(contexts, dict):
-                    ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
+                    ctx_list = cast(list, contexts.get("snapshots", contexts.get("contexts", [])))
+                elif isinstance(contexts, list):
+                    ctx_list = contexts
 
-                if ctx_list and len(ctx_list) > 0:
+                if ctx_list:
                     _render_context(ctx_list[0], "text")
                 else:
                     click.echo("No saved context found for this branch.")
@@ -680,10 +685,17 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
             metrics.emit_event("context_restored", repo_id, branch, {"snapshot_id": snapshot_id})
             logger.info(f"Context restored: {snapshot_id}")
         else:
-            # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
-            ctx_list = context_data
+            # Extract list from wrapper if needed
+            ctx_list: list = []
             if isinstance(context_data, dict):
-                ctx_list = context_data.get("snapshots", context_data.get("contexts", context_data))
+                # result could be a single snapshot or a list-wrapper
+                if "snapshot_id" in context_data:
+                    # It's a single snapshot
+                    ctx_list = [context_data]
+                else:
+                    ctx_list = cast(list, context_data.get("snapshots", context_data.get("contexts", [])))
+            elif isinstance(context_data, list):
+                ctx_list = context_data
 
             _render_context_list(ctx_list, output_format)
     except (NetworkError, ConnectionError) as e:
@@ -829,10 +841,12 @@ def list_contexts(limit: int, output_format: str) -> None:
             _replay_queued_operations(client, LocalStorage(), repo_id)
             contexts = client.list_contexts(repo_id, None, limit)
 
-        # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
-        ctx_list = contexts
+        # Extract list from wrapper if needed
+        ctx_list: list = []
         if isinstance(contexts, dict):
-            ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
+            ctx_list = cast(list, contexts.get("snapshots", contexts.get("contexts", [])))
+        elif isinstance(contexts, list):
+            ctx_list = contexts
 
         _render_context_list(ctx_list, output_format)
     except NetworkError as e:
@@ -887,10 +901,12 @@ def history(branch: Optional[str], limit: int, output_format: str) -> None:
             _replay_queued_operations(client, LocalStorage(), repo_id)
             contexts = client.list_contexts(repo_id, target_branch, limit)
 
-        # Try canonical 'snapshots' first, then 'contexts', then fall back to the raw response
-        ctx_list = contexts
+        # Extract list from wrapper if needed
+        ctx_list: list = []
         if isinstance(contexts, dict):
-            ctx_list = contexts.get("snapshots", contexts.get("contexts", contexts))
+            ctx_list = cast(list, contexts.get("snapshots", contexts.get("contexts", [])))
+        elif isinstance(contexts, list):
+            ctx_list = contexts
 
         _render_context_list(ctx_list, output_format)
     except NetworkError as e:

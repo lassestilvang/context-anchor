@@ -135,7 +135,7 @@ class APIClient:
         }
 
         # Manually serialize to handle datetime objects
-        def json_serial(obj):
+        def json_serial(obj: Any) -> Any:
             if isinstance(obj, datetime):
                 return obj.isoformat()
             raise TypeError(f"Type {type(obj)} not serializable")
