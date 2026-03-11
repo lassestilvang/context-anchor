@@ -677,8 +677,8 @@ The system consists of:
     - Test developer-scoped queries
     - _Requirements: 9.3, 9.5, 9.6_
 
-- [~] 27. Implement Hypothesis property-based test infrastructure
-  - [~] 27.1 Create Hypothesis strategies for domain models
+- [x] 27. Implement Hypothesis property-based test infrastructure
+  - [x] 27.1 Create Hypothesis strategies for domain models
     - Implement context_snapshots strategy with valid field generation
     - Implement action_verbs_text strategy for next steps
     - Implement file_paths strategy for relevant files
@@ -686,14 +686,14 @@ The system consists of:
     - Configure minimum 100 iterations per property test
     - _Requirements: All property tests_
 
-  - [~] 27.2 Configure property test execution
+  - [x] 27.2 Configure property test execution
     - Set up pytest configuration for Hypothesis
     - Configure deterministic seed for CI/CD
     - Set up test tagging with property references
     - Create test fixtures for common scenarios
     - _Requirements: All property tests_
 
-  - [~] 27.3 Write remaining property tests not covered in component tasks
+  - [x] 27.3 Write remaining property tests not covered in component tasks
     - **Property 13: Retention Period Enforcement**
     - **Property 22: Initialization Failure Error Messages**
     - **Property 23: Hook Status Reporting**
