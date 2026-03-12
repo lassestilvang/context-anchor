@@ -553,11 +553,11 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
     intent_str = _redact_secrets(intent, config.redact_patterns)
 
     # Prepare JSON serializable signals dict
-    def _json_serializable(obj):
+    def _json_serializable(obj: Any) -> Any:
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         if dataclasses.is_dataclass(obj):
-            return dataclasses.asdict(obj)
+            return dataclasses.asdict(cast(Any, obj))
         return str(obj)
 
     from .logging import get_logger

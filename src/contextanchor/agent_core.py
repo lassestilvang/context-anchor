@@ -94,6 +94,8 @@ CRITICAL CONSTRAINTS:
         is_nova = "nova" in self.model_id.lower()
         is_llama = "llama" in self.model_id.lower()
 
+        payload: Dict[str, Any]
+
         if is_nova:
             payload = {
                 "inferenceConfig": {
