@@ -13,8 +13,11 @@ from .privacy import PrivacyFilter
 
 class AgentCore:
     def __init__(self, bedrock_client: Any = None) -> None:
+        import os
         self.bedrock = bedrock_client or boto3.client("bedrock-runtime")
-        self.model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+        self.model_id = os.environ.get(
+            "BEDROCK_MODEL_ID", "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+        )
         self.privacy_filter = PrivacyFilter()
 
     def synthesize_context(
