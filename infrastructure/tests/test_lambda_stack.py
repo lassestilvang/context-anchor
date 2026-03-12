@@ -43,7 +43,7 @@ def create_test_lambda_stack(app):
                 code=lambda_.Code.from_inline(inline_code),
                 memory_size=512,
                 timeout=cdk.Duration.seconds(30),
-                environment={**common_env, "BEDROCK_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0"},
+                environment={**common_env, "BEDROCK_MODEL_ID": "eu.anthropic.claude-haiku-4-5-20251001-v1:0"},
             )
             
             table.grant_write_data(self.functions["capture"])
@@ -51,7 +51,7 @@ def create_test_lambda_stack(app):
                 cdk.aws_iam.PolicyStatement(
                     effect=cdk.aws_iam.Effect.ALLOW,
                     actions=["bedrock:InvokeModel"],
-                    resources=[f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"],
+                    resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0"],
                 )
             )
             
@@ -215,7 +215,7 @@ def test_capture_function_environment():
         "FunctionName": "contextanchor-capture",
         "Environment": {
             "Variables": assertions.Match.object_like({
-                "BEDROCK_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0",
+                "BEDROCK_MODEL_ID": "eu.anthropic.claude-haiku-4-5-20251001-v1:0",
                 "POWERTOOLS_SERVICE_NAME": "contextanchor",
                 "LOG_LEVEL": "INFO"
             })
