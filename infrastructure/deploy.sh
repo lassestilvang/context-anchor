@@ -31,6 +31,11 @@ fi
 # Activate virtual environment
 source .venv/bin/activate
 
+# Sync source to layer
+echo "Syncing source code to Lambda layer..."
+mkdir -p layer/python/contextanchor
+rsync -av --delete ../src/contextanchor/ layer/python/contextanchor/
+
 # Install dependencies
 echo "Installing Python dependencies..."
 pip install -r requirements.txt -r requirements-dev.txt -q

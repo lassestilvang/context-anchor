@@ -27,6 +27,7 @@ ACTION_VERBS = {
     "migrate",
     "review",
     "ship",
+    "develop",
 }
 
 

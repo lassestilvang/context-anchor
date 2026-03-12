@@ -89,6 +89,17 @@ class LambdaStack(Stack):
             )
         )
 
+        # Grant self-invoke for async processing
+        self.functions["capture"].add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["lambda:InvokeFunction"],
+                resources=[
+                    f"arn:aws:lambda:{self.region}:{self.account}:function:contextanchor-capture"
+                ],
+            )
+        )
+
         # Context Retrieval Lambda
         # Handles fetching latest or specific snapshots
         self.functions["retrieve"] = lambda_.Function(

@@ -1068,15 +1068,15 @@ The system consists of:
     - [x] Verify cost guardrails (budgets, alarms) are configured
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
 
-  - [ ] 44.4 Test end-to-end workflow against deployed API
-    - Initialize a test repository with `contextanchor init`
-    - Configure API endpoint in .contextanchor/config.yaml
-    - Configure API key in ~/.contextanchor/credentials
-    - Run `contextanchor save-context` and verify snapshot creation
-    - Run `contextanchor show-context` and verify retrieval
-    - Run `contextanchor list-contexts` and verify listing
-    - Test branch switch and automatic context restoration
-    - Test offline mode and sync command
+  - [x] 44.4 Test end-to-end workflow against deployed API
+    - [x] Initialize a test repository with `contextanchor init`
+    - [x] Configure API endpoint in .contextanchor/config.yaml
+    - [x] Configure API key in ~/.contextanchor/credentials
+    - [x] Run `contextanchor save-context` and verify snapshot creation
+    - [x] Run `contextanchor show-context` and verify retrieval
+    - [x] Run `contextanchor list-contexts` and verify listing
+    - [x] Test branch switch and automatic context restoration
+    - [x] Test offline mode and sync command
     - _Requirements: All Phase 1-4 requirements_
 
 - [ ] 45. Create production readiness checklist
@@ -1152,18 +1152,13 @@ The system consists of:
 ## Current Status (2026-03-11)
 
 ### Completion Summary
-- **Tasks Completed**: 45/48 (94%)
+- **Tasks Completed**: 46/48 (96%)
 - **Tests Passing**: 312/312 (100%)
 - **Code Coverage**: 82% (exceeds 80% target)
 - **Type Checking**: Passing (mypy reports no issues)
 - **Warnings**: 0 deprecation warnings, 0 resource warnings
 
 ### Remaining Work
-- **Task 44.3, 44.4**: Validate deployed resources and test end-to-end (Critical Priority)
-  - Impact: Deployed system not yet fully validated
-  - Effort: ~2-4 hours
-  - Blocking: Yes, required to verify end-to-end functionality
-
 - **Task 45**: Create production readiness checklist (Medium Priority)
   - Impact: Operational documentation gaps
   - Effort: ~4-6 hours

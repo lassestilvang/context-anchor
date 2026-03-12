@@ -15,6 +15,7 @@ class AgentCore:
     def __init__(self, bedrock_client: Any = None) -> None:
         import os
         self.bedrock = bedrock_client or boto3.client("bedrock-runtime")
+        # Ensure we always get the latest from environment
         self.model_id = os.environ.get(
             "BEDROCK_MODEL_ID", "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
         )
@@ -75,7 +76,7 @@ Your response MUST be strict JSON with the following keys:
 
 CRITICAL CONSTRAINTS:
 1. Total text must be under 500 words.
-2. Every item in "next_steps" MUST start with a valid action verb from this list: add, update, fix, remove, refactor, test, document, implement, create, verify, investigate, optimize, migrate, review, ship.
+2. Every item in "next_steps" MUST start with a valid action verb from this list: add, update, fix, remove, refactor, test, document, implement, create, verify, investigate, optimize, migrate, review, ship, develop.
 """
 
         signals_dict = {
@@ -89,20 +90,57 @@ CRITICAL CONSTRAINTS:
 
         user_message = f"Developer Intent:\n{self.privacy_filter.apply(intent)}\n\nGit Signals:\n{json.dumps(signals_dict, indent=2)}\n\nSynthesize the context into the requested JSON format."
 
-        return json.dumps(
-            {
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1000,
-                "system": system_prompt,
-                "messages": [{"role": "user", "content": [{"type": "text", "text": user_message}]}],
+        # Nova expects a slightly different Converse API format if using invoke_model directly with Nova IDs
+        is_nova = "nova" in self.model_id.lower()
+        is_llama = "llama" in self.model_id.lower()
+
+        if is_nova:
+            payload = {
+                "inferenceConfig": {
+                    "max_new_tokens": 1000,
+                    "temperature": 0.1
+                },
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"text": f"System: {system_prompt}\n\nUser: {user_message}"}
+                        ]
+                    }
+                ]
             }
-        )
+            return json.dumps(payload)
+        
+        # Llama 3.2 
+        if is_llama:
+            payload = {
+                "prompt": f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{system_prompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{user_message}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+                "max_gen_len": 1000,
+                "temperature": 0.1,
+            }
+            return json.dumps(payload)
+
+        payload = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 1000,
+            "system": system_prompt,
+            "messages": [{"role": "user", "content": [{"type": "text", "text": user_message}]}],
+        }
+        return json.dumps(payload)
 
     def _invoke_bedrock(self, prompt: str) -> str:
-        """Invoke the Bedrock Claude model."""
+        """Invoke the Bedrock model."""
         response = self.bedrock.invoke_model(modelId=self.model_id, body=prompt)
         response_body = json.loads(response.get("body").read())
-        return str(response_body["content"][0]["text"])
+        
+        # Support Claude, Nova, and Llama response formats
+        if "content" in response_body:
+            return str(response_body["content"][0]["text"])
+        elif "output" in response_body and "message" in response_body["output"]:
+            return str(response_body["output"]["message"]["content"][0]["text"])
+        elif "generation" in response_body:
+            return str(response_body["generation"])
+        return str(response_body)
 
     def _parse_bedrock_response(self, response_text: str) -> Dict[str, Any]:
         """Extract and parse JSON from the Bedrock response."""

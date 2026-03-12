@@ -5,6 +5,7 @@ import stat
 import click
 import re
 import dataclasses
+from datetime import datetime, date
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -214,7 +215,7 @@ def main(ctx: click.Context) -> None:
             from .local_storage import LocalStorage
 
             git_obs = GitObserver(str(repo_root))
-            repo_id = git_obs.generate_repository_id()
+            repo_id = git_obs.generate_repository_id() or "unknown"
             if repo_id:
                 local = LocalStorage()
                 local.update_last_accessed(repo_id)
@@ -483,10 +484,6 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
             click.echo(f"Error restoring context: {e}")
 
 
-if __name__ == "__main__":
-    main()
-
-
 @main.command(name="save-context")
 @click.option("--message", "-m", help="Developer intent (skips prompt)")
 @click.option("--hook", is_flag=True, help="Run in non-interactive hook mode.")
@@ -547,16 +544,27 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
 
     intent_str = _redact_secrets(intent, config.redact_patterns)
 
+    # Prepare JSON serializable signals dict
+    def _json_serializable(obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if dataclasses.is_dataclass(obj):
+            return dataclasses.asdict(obj)
+        return str(obj)
+
     try:
-        signals_dict = dataclasses.asdict(signals)
-    except TypeError:
-        signals_dict = getattr(signals, "__dict__", {})
+        # Use a more robust serialization for the full payload
+        import json
+        serializable_signals = json.loads(json.dumps(signals, default=_json_serializable))
+    except Exception as e:
+        logger.error(f"Failed to serialize signals: {e}")
+        serializable_signals = {}
 
     payload: dict[str, Any] = {
         "repository_id": repo_id,
         "branch": branch,
         "developer_intent": intent_str,
-        "signals": signals_dict,
+        "signals": serializable_signals,
     }
 
     from .api_client import APIClient
@@ -575,7 +583,7 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
         with console.status("[info]Saving context to cloud...[/info]", spinner="dots"):
             # Try to drain queue before new operation
             _replay_queued_operations(client, LocalStorage(), repo_id)
-            resp = client.create_context(repo_id, branch, intent_str, payload["signals"])
+            resp = client.create_context(repo_id, branch, intent_str, serializable_signals)
             snapshot_id = resp.get("snapshot_id", "unknown")
 
         console.print(
@@ -975,3 +983,7 @@ def export_metrics(format: str) -> None:
         console.print_json(data)
     else:
         console.print(data)
+
+
+if __name__ == "__main__":
+    main()
