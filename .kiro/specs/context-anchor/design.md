@@ -139,7 +139,7 @@ Developer → save-context command → CLI Tool
 - **API Gateway**: REST API with regional endpoint
 - **Lambda**: Python 3.11 runtime, 512MB memory, 30s timeout
 - **DynamoDB**: On-demand billing mode for cost efficiency
-- **Bedrock**: Claude 3 Haiku model (cost-effective, fast)
+- **Bedrock**: Claude Haiku model (cost-effective, fast)
 - **S3**: Standard storage with lifecycle policies
 - **CloudWatch**: Logs and metrics
 - **IAM**: Fine-grained access control

@@ -12,7 +12,7 @@ ContextAnchor consists of two major components: a local CLI client and an AWS Se
 
 ### 2. AWS Serverless Backend
 - **API Gateway:** Provides secure REST endpoints for capturing and retrieving contexts.
-- **Lambda (Agent Core):** Asynchronously processes captured signals (uncommitted diffs, commit messages). It calls **Amazon Bedrock** (Anthropic Claude 3 Haiku) to synthesize developer intent into goals, rationale, and next steps.
+- **Lambda (Agent Core):** Asynchronously processes captured signals (uncommitted diffs, commit messages). It calls **Amazon Bedrock** (Anthropic Claude Haiku) to synthesize developer intent into goals, rationale, and next steps.
 - **DynamoDB:** Stores context snapshots using a `Repository + Branch` partition/sort key design for high-performance retrieval. Data is encrypted at rest (AES-256).
 
 ## Data Flow: Context Capture
@@ -38,4 +38,4 @@ ContextAnchor is built with privacy in mind:
 The infrastructure is optimized to fit within the AWS Free Tier for small to medium usage:
 - **Lambda:** Python 3.11 runtimes with small memory footprints.
 - **DynamoDB:** On-demand billing mode with TTL (Time To Live) configured to automatically delete expired contexts (default: 30 days).
-- **Bedrock:** The system uses the highly cost-efficient Claude 3 Haiku model.
+- **Bedrock:** The system uses the highly cost-efficient Claude Haiku model.
