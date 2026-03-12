@@ -38,11 +38,21 @@ class LambdaStack(Stack):
         self.table = table
         self.functions = {}
 
+        # Create Lambda Layer for shared contextanchor package
+        self.layer = lambda_.LayerVersion(
+            self,
+            "ContextAnchorLayer",
+            code=lambda_.Code.from_asset("layer"),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_11],
+            description="ContextAnchor shared source code"
+        )
+
         # Common Lambda configuration
         common_env = {
             "TABLE_NAME": table.table_name,
             "POWERTOOLS_SERVICE_NAME": "contextanchor",
             "LOG_LEVEL": "INFO",
+            "GIT_PYTHON_REFRESH": "quiet",
         }
 
         # Context Capture Lambda
@@ -55,11 +65,12 @@ class LambdaStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="capture.handler",
             code=lambda_.Code.from_asset("../lambda"),
+            layers=[self.layer],
             memory_size=512,  # 512MB for Bedrock API calls
             timeout=Duration.seconds(30),  # 30s for AI synthesis
             environment={
                 **common_env,
-                "BEDROCK_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0",
+                "BEDROCK_MODEL_ID": "eu.anthropic.claude-haiku-4-5-20251001-v1:0",
             },
         )
 
@@ -72,7 +83,8 @@ class LambdaStack(Stack):
                 effect=iam.Effect.ALLOW,
                 actions=["bedrock:InvokeModel"],
                 resources=[
-                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+                    f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0",
+                    "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0"
                 ],
             )
         )
@@ -86,6 +98,7 @@ class LambdaStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="retrieve.handler",
             code=lambda_.Code.from_asset("../lambda"),
+            layers=[self.layer],
             memory_size=256,
             timeout=Duration.seconds(10),
             environment=common_env,
@@ -103,6 +116,7 @@ class LambdaStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="delete.handler",
             code=lambda_.Code.from_asset("../lambda"),
+            layers=[self.layer],
             memory_size=256,
             timeout=Duration.seconds(10),
             environment=common_env,
@@ -120,6 +134,7 @@ class LambdaStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="list.handler",
             code=lambda_.Code.from_asset("../lambda"),
+            layers=[self.layer],
             memory_size=256,
             timeout=Duration.seconds(10),
             environment=common_env,
@@ -137,7 +152,14 @@ class LambdaStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="health.handler",
             code=lambda_.Code.from_asset("../lambda"),
+            layers=[self.layer],
             memory_size=128,
             timeout=Duration.seconds(3),
-            environment={"SERVICE_NAME": "contextanchor"},
+            environment={
+                "SERVICE_NAME": "contextanchor",
+                "GIT_PYTHON_REFRESH": "quiet",
+            },
         )
+
+        # Grant DynamoDB read permissions for health check
+        table.grant_read_data(self.functions["health"])
