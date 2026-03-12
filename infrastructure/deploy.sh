@@ -61,7 +61,8 @@ echo "Synthesizing CloudFormation template..."
 $CDK_CMD synth
 
 # Deploy stacks
-echo "Deploying ContextAnchor stack..."
+REGION=$(aws configure get region || echo "eu-north-1")
+echo "Deploying ContextAnchor stacks to region: $REGION..."
 $CDK_CMD deploy --all --require-approval never
 
-echo "Deployment complete! You can now configure your ContextAnchor CLI with the API endpoint provided in the outputs."
+echo "Deployment complete in $REGION! You can now configure your ContextAnchor CLI with the API endpoint provided in the outputs."
