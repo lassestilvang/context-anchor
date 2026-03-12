@@ -57,3 +57,8 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Infrastructure
+infrastructure/layer/
+infrastructure/cdk.out/
+infrastructure/.venv/
