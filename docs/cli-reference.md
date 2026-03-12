@@ -1,79 +1,217 @@
 # CLI Reference
 
-The ContextAnchor CLI (`contextanchor`) provides commands to initialize your repository, capture context manually or automatically, and query your context history.
+The ContextAnchor CLI (`contextanchor`) captures and restores developer context tied to your current Git repository.
 
-## Commands
+## Command Index
 
-### `contextanchor init`
-Initializes ContextAnchor in the current Git repository.
-- Creates `.contextanchor/config.yaml`
-- Creates a local SQLite database for offline operations
-- Installs `post-commit` and `post-checkout` hooks
-
-### `contextanchor save-context`
-Captures the current context (uncommitted changes, current branch) and sends it to the backend.
-
-**Options:**
-- `-m`, `--message`: Pass a message indicating your current intent or goals (skips the interactive prompt).
-- `--hook`: Hidden flag used when called by a Git hook (runs silently).
-- `--branch-switch`: Hidden flag used when called by the post-checkout hook.
-
-### `contextanchor show-context`
-Displays the latest context snapshot for the current branch or a specific snapshot.
-
-**Arguments:**
-- `snapshot_id` (Optional): Show a specific snapshot by its ID.
-
-**Options:**
-- `-f`, `--format`: Output format (`text` [default], `json`, `markdown`).
-- `-b`, `--branch`: Specify the branch to retrieve the context for.
-- `-t`, `--timestamp`: Retrieve a snapshot taken at or before this timestamp (ISO 8601).
-
-### `contextanchor list-contexts`
-Lists all context snapshots captured for the current repository.
-
-**Options:**
-- `--limit`: Maximum number of snapshots to display.
-- `-f`, `--format`: Output format.
-
-### `contextanchor history`
-Displays a chronological history of contexts for the current branch.
-
-**Options:**
-- `-b`, `--branch`: The branch to query history for.
-- `--limit`: Maximum number of snapshots to display (default: 20).
-
-### `contextanchor delete-context [snapshot_id]`
-Soft-deletes a context snapshot.
-
-## Configuration File
-
-The initialization process creates a `config.yaml` file in `.contextanchor/config.yaml`.
-
-```yaml
-api_endpoint: "https://your-api-gateway-url/prod/v1"
-api_timeout_seconds: 30
-capture_prompt: "What are you working on right now?"
-enabled_signals:
-  - "diffs"
-  - "commits"
-redact_patterns:
-  - '(?i)bearer\s+[a-z0-9\-\._~]+'
-  - '(?i)api[_-]?key[_-]?[a-z0-9]+'
-retry_attempts: 3
-retention_days: 30
+```text
+contextanchor [OPTIONS] COMMAND [ARGS]...
 ```
 
-- **api_endpoint:** The AWS API Gateway URL.
-- **capture_prompt:** The prompt text shown when running `save-context` interactively.
-- **enabled_signals:** The types of Git signals to capture.
-- **redact_patterns:** Regex patterns used to scrub secrets before sending data to the backend.
-- **retention_days:** Number of days before the backend automatically purges old snapshots.
+Commands:
+
+- `init`
+- `save-context`
+- `show-context`
+- `list-contexts`
+- `history`
+- `delete-context`
+- `sync`
+- `list-repositories`
+- `export-metrics`
+
+## Global Options
+
+- `--help`: Show command help
+- `--version`: Show installed version
+
+## Command Details
+
+### `contextanchor init`
+
+Initialize ContextAnchor in the current Git repository.
+
+What it does:
+
+1. Creates `.contextanchor/config.yaml`.
+2. Installs `.git/hooks/post-commit` and `.git/hooks/post-checkout`.
+3. Registers repository metadata in local storage.
+
+### `contextanchor save-context`
+
+Capture and persist a snapshot of the current work context.
+
+Options:
+
+- `-m, --message TEXT`: Developer intent text (skips interactive prompt)
+- `--hook`: Internal flag for non-interactive hook mode
+- `--branch-switch`: Internal flag for branch-switch hook usage
+
+Example:
+
+```bash
+contextanchor save-context -m "Investigating flaky integration test"
+```
+
+### `contextanchor show-context [SNAPSHOT_ID]`
+
+Show one snapshot by ID, or list recent snapshots if ID is omitted.
+
+Arguments:
+
+- `SNAPSHOT_ID` (optional): Specific snapshot identifier
+
+Options:
+
+- `-f, --format [text|json|markdown]`: Output format (default `text`)
+- `-l, --limit INTEGER`: Number of recent snapshots when no ID is provided (default `5`)
+
+Examples:
+
+```bash
+contextanchor show-context
+contextanchor show-context snap_123456 -f json
+```
+
+### `contextanchor list-contexts`
+
+List context snapshots for the current repository.
+
+Options:
+
+- `-l, --limit INTEGER`: Number of results (default `20`)
+- `-f, --format [text|json|markdown]`: Output format
+
+Example:
+
+```bash
+contextanchor list-contexts -l 10
+```
+
+### `contextanchor history`
+
+List context history for a branch.
+
+Options:
+
+- `-b, --branch TEXT`: Branch to query (defaults to current branch)
+- `-l, --limit INTEGER`: Number of results (default `20`)
+- `-f, --format [text|json|markdown]`: Output format
+
+Example:
+
+```bash
+contextanchor history -b main -l 20
+```
+
+### `contextanchor delete-context SNAPSHOT_ID`
+
+Soft-delete a specific snapshot.
+
+Arguments:
+
+- `SNAPSHOT_ID`: Snapshot identifier to delete
+
+Example:
+
+```bash
+contextanchor delete-context snap_123456
+```
+
+### `contextanchor sync`
+
+Replay queued offline operations for the current repository.
+
+Example:
+
+```bash
+contextanchor sync
+```
+
+### `contextanchor list-repositories`
+
+Show repositories registered in local storage.
+
+Example:
+
+```bash
+contextanchor list-repositories
+```
+
+### `contextanchor export-metrics`
+
+Export metrics and instrumentation events.
+
+Options:
+
+- `-f, --format [json|csv]`: Export format (default `json`)
+
+Examples:
+
+```bash
+contextanchor export-metrics -f json
+contextanchor export-metrics -f csv
+```
+
+## Configuration
+
+Each initialized repository has `.contextanchor/config.yaml`.
+
+Default shape:
+
+```yaml
+api_endpoint: "https://api.contextanchor.example.com"
+api_timeout_seconds: 30
+retry_attempts: 3
+capture_prompt: "What were you trying to solve right now?"
+retention_days: 90
+offline_queue_max: 200
+enabled_signals:
+  - commits
+  - branches
+  - diffs
+  - pr_references
+redact_patterns: []
+```
+
+`api_endpoint` should be set to your deployed API Gateway base URL (typically ending with `/prod/v1`).
+
+## Credentials
+
+API key is read from:
+
+```text
+~/.contextanchor/credentials
+```
+
+Recommended permissions:
+
+```bash
+chmod 600 ~/.contextanchor/credentials
+```
 
 ## Troubleshooting
 
-### Context Not Syncing
-If `save-context` takes a long time or fails, ensure `api_endpoint` is reachable. The CLI will queue failed operations locally and retry them automatically on the next command execution using exponential backoff.
+### Network/Sync Problems
 
-### Hook Execution Issues
-If ContextAnchor isn't responding to Git checkouts, verify that `.git/hooks/post-checkout` is executable (`chmod +x .git/hooks/post-checkout`).
+If cloud calls fail, ContextAnchor queues operations locally and retries with exponential backoff.
+
+Use:
+
+```bash
+contextanchor sync
+```
+
+### Branch Switch Context Not Showing
+
+Verify hooks are executable:
+
+```bash
+chmod +x .git/hooks/post-checkout .git/hooks/post-commit
+```
+
+### Inspect Local Logs
+
+```bash
+tail -n 200 ~/.contextanchor/logs/contextanchor.log
+```

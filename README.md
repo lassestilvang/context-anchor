@@ -45,6 +45,15 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
+## Documentation
+
+- [Getting Started](docs/getting-started.md)
+- [User Onboarding Guide](docs/user-onboarding.md)
+- [CLI Reference](docs/cli-reference.md)
+- [Production Readiness Checklist](docs/production-readiness-checklist.md)
+- [Operational Runbook](docs/operational-runbook.md)
+- [Architecture](docs/architecture.md)
+
 ## Development
 
 ### Setup

@@ -1,0 +1,33 @@
+$ contextanchor init
+✅ ContextAnchor initialized successfully!
+
+$ cat .contextanchor/config.yaml
+api_endpoint: https://api.contextanchor.example.com
+api_timeout_seconds: 30
+retry_attempts: 3
+capture_prompt: What were you trying to solve right now?
+retention_days: 90
+offline_queue_max: 200
+enabled_signals:
+- commits
+- branches
+- diffs
+- pr_references
+redact_patterns: []
+
+$ contextanchor save-context -m "Drafting onboarding and runbook docs"
+
+🔍 ContextAnchor: Detected switch to branch 'main'
+⚠ Network unavailable. Queued operation for later. (Op ID: 
+e0fad17a-8206-42f2-a0d8-705e13858b3b)
+
+$ contextanchor sync
+⚠ 1 operations failed to sync and remain in queue.
+
+$ contextanchor list-repositories
+                            Registered Repositories                             
+┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Name      ┃ Root Path                      ┃ Last Accessed                   ┃
+┡━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ demo-repo │ /Users/lasse/Sites/context-an… │ 2026-03-12T12:24:45.329302+00:… │
+└───────────┴────────────────────────────────┴─────────────────────────────────┘

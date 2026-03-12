@@ -108,6 +108,24 @@ To initialize ContextAnchor for a specific Git repository, follow these steps:
    api_endpoint: "https://xxxxxx.execute-api.us-east-1.amazonaws.com/prod/v1"
    ```
 
+4. **Configure the API Key:**
+   Store your API Gateway key in `~/.contextanchor/credentials`.
+
+   ```bash
+   mkdir -p ~/.contextanchor
+   chmod 700 ~/.contextanchor
+   printf '%s' '<your-api-key>' > ~/.contextanchor/credentials
+   chmod 600 ~/.contextanchor/credentials
+   ```
+
+## Production Operations Docs
+
+Before user rollout, complete:
+
+- `docs/production-readiness-checklist.md`
+- `docs/operational-runbook.md`
+- `docs/user-onboarding.md`
+
 ## Troubleshooting
 
 - **"Git hook execution failed":** Ensure that you have permissions to write to the `.git/hooks` directory in your repository.

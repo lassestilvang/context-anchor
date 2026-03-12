@@ -110,8 +110,8 @@ CRITICAL CONSTRAINTS:
                 ]
             }
             return json.dumps(payload)
-        
-        # Llama 3.2 
+
+        # Llama 3.2
         if is_llama:
             payload = {
                 "prompt": f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{system_prompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{user_message}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
@@ -132,7 +132,7 @@ CRITICAL CONSTRAINTS:
         """Invoke the Bedrock model."""
         response = self.bedrock.invoke_model(modelId=self.model_id, body=prompt)
         response_body = json.loads(response.get("body").read())
-        
+
         # Support Claude, Nova, and Llama response formats
         if "content" in response_body:
             return str(response_body["content"][0]["text"])

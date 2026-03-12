@@ -552,6 +552,10 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
             return dataclasses.asdict(obj)
         return str(obj)
 
+    from .logging import get_logger
+
+    logger = get_logger("cli.save_context")
+
     try:
         # Use a more robust serialization for the full payload
         import json
@@ -570,9 +574,7 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
     from .api_client import APIClient
     from .local_storage import LocalStorage
     from .errors import NetworkError, ContextAnchorError
-    from .logging import get_logger
 
-    logger = get_logger("cli.save_context")
     client = APIClient(config.api_endpoint, config.retry_attempts, config.api_timeout_seconds)
     from .metrics import MetricsCollector
 
