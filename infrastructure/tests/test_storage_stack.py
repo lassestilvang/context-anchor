@@ -100,72 +100,15 @@ def test_s3_lifecycle_policies():
 
 
 def test_sns_topic_created():
-    """Test that SNS topic for alerts is created."""
+    """Test that SNS topic for regional alerts is created."""
     app = cdk.App()
     stack = StorageStack(app, "TestStack")
     template = assertions.Template.from_stack(stack)
     
     # Verify SNS topic exists
     template.resource_count_is("AWS::SNS::Topic", 1)
-
-
-def test_budget_created():
-    """Test that AWS Budget is created."""
-    app = cdk.App()
-    stack = StorageStack(app, "TestStack")
-    template = assertions.Template.from_stack(stack)
-    
-    # Verify budget exists
-    template.resource_count_is("AWS::Budgets::Budget", 1)
-
-
-def test_budget_configuration():
-    """Test that budget has correct configuration."""
-    app = cdk.App()
-    stack = StorageStack(app, "TestStack")
-    template = assertions.Template.from_stack(stack)
-    
-    # Verify budget configuration
-    template.has_resource_properties("AWS::Budgets::Budget", {
-        "Budget": {
-            "BudgetType": "COST",
-            "TimeUnit": "MONTHLY",
-            "BudgetLimit": {
-                "Amount": 5.0,
-                "Unit": "USD"
-            }
-        }
-    })
-
-
-def test_budget_notifications():
-    """Test that budget has notifications configured."""
-    app = cdk.App()
-    stack = StorageStack(app, "TestStack")
-    template = assertions.Template.from_stack(stack)
-    
-    # Verify notifications exist
-    template.has_resource_properties("AWS::Budgets::Budget", {
-        "NotificationsWithSubscribers": assertions.Match.array_with([
-            # 80% threshold notification
-            assertions.Match.object_like({
-                "Notification": {
-                    "NotificationType": "ACTUAL",
-                    "ComparisonOperator": "GREATER_THAN",
-                    "Threshold": 80,
-                    "ThresholdType": "PERCENTAGE"
-                }
-            }),
-            # Forecasted 100% notification
-            assertions.Match.object_like({
-                "Notification": {
-                    "NotificationType": "FORECASTED",
-                    "ComparisonOperator": "GREATER_THAN",
-                    "Threshold": 100,
-                    "ThresholdType": "PERCENTAGE"
-                }
-            })
-        ])
+    template.has_resource_properties("AWS::SNS::Topic", {
+        "TopicName": "contextanchor-regional-alerts"
     })
 
 
@@ -175,22 +118,8 @@ def test_cloudwatch_alarms_created():
     stack = StorageStack(app, "TestStack")
     template = assertions.Template.from_stack(stack)
     
-    # Verify 3 CloudWatch alarms exist
-    template.resource_count_is("AWS::CloudWatch::Alarm", 3)
-
-
-def test_lambda_invocations_alarm():
-    """Test that Lambda invocations alarm is configured."""
-    app = cdk.App()
-    stack = StorageStack(app, "TestStack")
-    template = assertions.Template.from_stack(stack)
-    
-    # Verify Lambda alarm exists
-    template.has_resource_properties("AWS::CloudWatch::Alarm", {
-        "AlarmName": "contextanchor-lambda-invocations-high",
-        "Threshold": 800000,
-        "ComparisonOperator": "GreaterThanThreshold"
-    })
+    # Verify 2 CloudWatch alarms exist (DynamoDB and API Gateway)
+    template.resource_count_is("AWS::CloudWatch::Alarm", 2)
 
 
 def test_dynamodb_reads_alarm():

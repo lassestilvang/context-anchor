@@ -39,3 +39,4 @@ The infrastructure is optimized to fit within the AWS Free Tier for small to med
 - **Lambda:** Python 3.11 runtimes with small memory footprints.
 - **DynamoDB:** On-demand billing mode with TTL (Time To Live) configured to automatically delete expired contexts (default: 30 days).
 - **Bedrock:** The system uses the highly cost-efficient Claude Haiku model.
+- **Cost Monitoring:** Deploying AWS Budgets in `us-east-1` (global) and regional CloudWatch alarms in the primary region (`eu-north-1`) for comprehensive cost guardrails.

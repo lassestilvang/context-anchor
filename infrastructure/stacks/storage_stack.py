@@ -67,95 +67,15 @@ class StorageStack(Stack):
             ],
         )
 
-        # SNS Topic for budget alerts
-        alert_topic = sns.Topic(
+        # SNS Topic for regional alerts (DynamoDB, API Gateway)
+        self.alert_topic = sns.Topic(
             self,
-            "BudgetAlertTopic",
-            topic_name="contextanchor-budget-alerts",
-            display_name="ContextAnchor Budget Alerts",
-        )
-
-        # Requirement 14.6: Cost guardrails with Free Tier thresholds
-        # AWS Budget for monthly spend monitoring
-        # Free Tier limits:
-        # - Lambda: 1M requests/month, 400k GB-seconds compute
-        # - DynamoDB: 25 GB storage, 25 WCU, 25 RCU
-        # - API Gateway: 1M requests/month
-        # - S3: 5 GB storage, 20k GET, 2k PUT
-        budgets.CfnBudget(
-            self,
-            "MonthlyBudget",
-            budget=budgets.CfnBudget.BudgetDataProperty(
-                budget_type="COST",
-                time_unit="MONTHLY",
-                budget_limit=budgets.CfnBudget.SpendProperty(
-                    amount=5.0,  # $5/month threshold
-                    unit="USD",
-                ),
-                budget_name="ContextAnchor-Monthly-Budget",
-                cost_filters={
-                    "TagKeyValue": ["user:Project$ContextAnchor"],
-                },
-            ),
-            notifications_with_subscribers=[
-                budgets.CfnBudget.NotificationWithSubscribersProperty(
-                    notification=budgets.CfnBudget.NotificationProperty(
-                        notification_type="ACTUAL",
-                        comparison_operator="GREATER_THAN",
-                        threshold=80,  # Alert at 80% of budget
-                        threshold_type="PERCENTAGE",
-                    ),
-                    subscribers=[
-                        budgets.CfnBudget.SubscriberProperty(
-                            subscription_type="SNS",
-                            address=alert_topic.topic_arn,
-                        )
-                    ],
-                ),
-                budgets.CfnBudget.NotificationWithSubscribersProperty(
-                    notification=budgets.CfnBudget.NotificationProperty(
-                        notification_type="FORECASTED",
-                        comparison_operator="GREATER_THAN",
-                        threshold=100,  # Alert if forecasted to exceed budget
-                        threshold_type="PERCENTAGE",
-                    ),
-                    subscribers=[
-                        budgets.CfnBudget.SubscriberProperty(
-                            subscription_type="SNS",
-                            address=alert_topic.topic_arn,
-                        )
-                    ],
-                ),
-            ],
-        )
-
-        # CloudWatch Alarm for Lambda invocation count
-        # Alert if approaching Free Tier limit (1M requests/month)
-        lambda_invocations_alarm = cloudwatch.Alarm(
-            self,
-            "LambdaInvocationsAlarm",
-            alarm_name="contextanchor-lambda-invocations-high",
-            alarm_description="Alert when Lambda invocations approach Free Tier limit",
-            metric=cloudwatch.Metric(
-                namespace="AWS/Lambda",
-                metric_name="Invocations",
-                statistic="Sum",
-                period=Duration.days(1),
-                dimensions_map={
-                    "FunctionName": "contextanchor-*",
-                },
-            ),
-            threshold=800000,  # 800k invocations (80% of 1M monthly limit)
-            evaluation_periods=1,
-            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-        )
-
-        lambda_invocations_alarm.add_alarm_action(
-            cw_actions.SnsAction(alert_topic)
+            "RegionalAlertTopic",
+            topic_name="contextanchor-regional-alerts",
+            display_name="ContextAnchor Regional Alerts",
         )
 
         # CloudWatch Alarm for DynamoDB consumed read capacity
-        # Alert if consistently high usage
         dynamodb_reads_alarm = cloudwatch.Alarm(
             self,
             "DynamoDBReadsAlarm",
@@ -176,11 +96,10 @@ class StorageStack(Stack):
         )
 
         dynamodb_reads_alarm.add_alarm_action(
-            cw_actions.SnsAction(alert_topic)
+            cw_actions.SnsAction(self.alert_topic)
         )
 
         # CloudWatch Alarm for API Gateway request count
-        # Alert if approaching Free Tier limit (1M requests/month)
         api_requests_alarm = cloudwatch.Alarm(
             self,
             "ApiRequestsAlarm",
@@ -198,5 +117,5 @@ class StorageStack(Stack):
         )
 
         api_requests_alarm.add_alarm_action(
-            cw_actions.SnsAction(alert_topic)
+            cw_actions.SnsAction(self.alert_topic)
         )
