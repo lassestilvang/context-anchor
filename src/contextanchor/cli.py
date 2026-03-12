@@ -127,7 +127,9 @@ def _redact_secrets(text: str, patterns: list) -> str:
     return text
 
 
-def _replay_queued_operations(client: Any, local: Any, repo_id: str, force: bool = False) -> int:
+def _replay_queued_operations(
+    client: Any, local: Any, repo_id: str, force: bool = False, progress_task: Any = None, progress_obj: Any = None
+) -> int:
     """Replay pending operations for a repository."""
     ops = local.get_pending_operations()
     # Filter by repo_id
@@ -135,6 +137,9 @@ def _replay_queued_operations(client: Any, local: Any, repo_id: str, force: bool
 
     if not pending:
         return 0
+
+    if progress_obj and progress_task is not None:
+        progress_obj.update(progress_task, total=len(pending))
 
     success_count = 0
     for op in pending:
@@ -156,6 +161,9 @@ def _replay_queued_operations(client: Any, local: Any, repo_id: str, force: bool
             local.retry_operation(op)
             if not force:
                 break
+        finally:
+            if progress_obj and progress_task is not None:
+                progress_obj.update(progress_task, advance=1)
     return success_count
 
 
@@ -430,7 +438,7 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
             pass
 
     if old_branch != branch and branch:
-        click.echo(f"\\n🔍 ContextAnchor: Switched to branch '{branch}'")
+        console.print(f"\n[info]🔍 ContextAnchor:[/info] Switched to branch '[highlight]{branch}[/highlight]'")
         try:
             from .metrics import MetricsCollector
 
@@ -466,7 +474,7 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
                 if ctx_list:
                     _render_context(ctx_list[0], "text")
                 else:
-                    click.echo("No saved context found for this branch.")
+                    console.print("[warning]⚠ No saved context found for this branch.[/warning]")
             except ConnectionError:
                 local = LocalStorage()
                 cached = local.get_cached_snapshot(repo_id, branch)
@@ -479,9 +487,9 @@ def hook_branch_switch(prev_head: Optional[str], new_head: Optional[str]) -> Non
                         c_dict = getattr(cached, "__dict__", {})
                     _render_context(c_dict, "text")
                 else:
-                    click.echo("No saved context found for this branch.")
+                    console.print("[warning]⚠ No saved context found for this branch.[/warning]")
         except Exception as e:
-            click.echo(f"Error restoring context: {e}")
+            console.print(f"[error]❌ Error restoring context:[/error] {e}")
 
 
 @main.command(name="save-context")
@@ -492,12 +500,12 @@ def save_context(message: Optional[str], hook: bool, branch_switch: bool) -> Non
     """Capture and save developer context snapshot."""
     repo_root = _find_git_root()
     if not repo_root:
-        click.echo("Error: Not inside a git repository.")
+        console.print("[error]❌ Error: Not inside a git repository.[/error]")
         raise click.Abort()
 
     config_path = repo_root / ".contextanchor" / "config.yaml"
     if not config_path.exists():
-        click.echo("Error: ContextAnchor is not initialized in this repository.")
+        console.print("[error]❌ Error: ContextAnchor is not initialized in this repository.[/error]")
         raise click.Abort()
 
     from .config import load_config
@@ -636,12 +644,12 @@ def show_context(snapshot_id: Optional[str], output_format: str, limit: int) -> 
     """Display specific context snapshot or history."""
     repo_root = _find_git_root()
     if not repo_root:
-        click.echo("Error: Not inside a git repository.")
+        console.print("[error]❌ Error: Not inside a git repository.[/error]")
         raise click.Abort()
 
     config_path = repo_root / ".contextanchor" / "config.yaml"
     if not config_path.exists():
-        click.echo("Error: ContextAnchor is not initialized in this repository.")
+        console.print("[error]❌ Error: ContextAnchor is not initialized in this repository.[/error]")
         raise click.Abort()
 
     from .config import load_config
@@ -801,8 +809,19 @@ def sync() -> None:
         console.print("[info]No pending operations to sync.[/info]")
         return
 
-    with console.status(f"[info]Syncing {pending_count} operations...[/info]", spinner="dots"):
-        synced = _replay_queued_operations(client, local, repo_id, force=True)
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task(f"[info]Syncing {pending_count} operations...", total=pending_count)
+        synced = _replay_queued_operations(
+            client, local, repo_id, force=True, progress_task=task, progress_obj=progress
+        )
 
     if synced > 0:
         console.print(f"[success]✅ Successfully synced {synced} operations.[/success]")

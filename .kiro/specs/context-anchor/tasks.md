@@ -1114,11 +1114,11 @@ The system consists of:
     - Document installation instructions for each shell
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.6_
 
-  - [ ] 47.2 Enhanced CLI output formatting
-    - Add color-coded output for better readability
-    - Add emoji indicators for status (✓, ✗, ⚠)
-    - Add progress bars for long-running operations
-    - Add table formatting for list/history commands
+  - [x] 46.2 Enhanced CLI output formatting
+    - [x] Add color-coded output for better readability
+    - [x] Add emoji indicators for status (✓, ✗, ⚠)
+    - [x] Add progress bars for long-running operations
+    - [x] Add table formatting for list/history commands
     - _Requirements: 13.5_
 
   - [ ] 46.3 Additional metrics and analytics
