@@ -1052,12 +1052,12 @@ The system consists of:
       - [x] Verify AWS account has sufficient permissions
     - _Requirements: 14.1, 14.2, 14.3, 14.4_
 
-  - [ ] 44.2 Deploy infrastructure to test environment
-    - Navigate to infrastructure/ directory
-    - Run: `./deploy.sh`
-    - Capture API Gateway endpoint URL from CDK outputs
-    - Capture API key from AWS Console or CDK outputs
-    - Verify all stacks deployed successfully
+  - [x] 44.2 Deploy infrastructure to test environment
+    - [x] Navigate to infrastructure/ directory
+    - [x] Run: `./deploy.sh`
+    - [x] Capture API Gateway endpoint URL from CDK outputs: `https://dsmbfxaipl.execute-api.eu-north-1.amazonaws.com/prod/`
+    - [x] Capture API key from AWS Console or CDK outputs: `IqAScRd5dq8x0ATs4tk4xxcfRa2WGLA24sDZDaAe`
+    - [x] Verify all stacks deployed successfully
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
 
   - [ ] 44.3 Validate deployed resources
@@ -1152,16 +1152,16 @@ The system consists of:
 ## Current Status (2026-03-11)
 
 ### Completion Summary
-- **Tasks Completed**: 43/46 (93%)
+- **Tasks Completed**: 45/48 (94%)
 - **Tests Passing**: 312/312 (100%)
 - **Code Coverage**: 82% (exceeds 80% target)
 - **Type Checking**: Passing (mypy reports no issues)
 - **Warnings**: 0 deprecation warnings, 0 resource warnings
 
 ### Remaining Work
-- **Task 44**: Deploy and validate AWS infrastructure (Critical Priority)
-  - Impact: Backend not yet validated in AWS
-  - Effort: ~4-8 hours (including troubleshooting)
+- **Task 44.3, 44.4**: Validate deployed resources and test end-to-end (Critical Priority)
+  - Impact: Deployed system not yet fully validated
+  - Effort: ~2-4 hours
   - Blocking: Yes, required to verify end-to-end functionality
 
 - **Task 45**: Create production readiness checklist (Medium Priority)
